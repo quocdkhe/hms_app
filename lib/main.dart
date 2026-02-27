@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:hms_app/views/find_customer_view.dart';
+import 'package:hms_app/views/find_room_view.dart';
+import 'package:hms_app/views/my_profile_view.dart';
+import 'package:hms_app/views/settings_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'views/home_view.dart';
+import 'views/room_map_view.dart';
 import 'views/login_view.dart';
 
 Future<void> main() async {
@@ -24,7 +28,11 @@ class HMSApp extends StatelessWidget {
       initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginView(),
-        '/home': (context) => const HomeView(),
+        '/room-map': (context) => const RoomMapView(),
+        '/find-room': (context) => const FindRoomView(),
+        '/find-customer': (context) => const FindCustomerView(),
+        '/settings': (context) => const SettingsView(),
+        '/profile': (context) => const MyProfileView(),
       },
     );
   }

@@ -11,6 +11,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final supabase = Supabase.instance.client;
   bool _isLoading = false;
 
   Future<void> _login() async {
@@ -20,12 +21,11 @@ class _LoginViewState extends State<LoginView> {
     try {
       final email = _emailController.text;
       final password = _passwordController.text;
-      final supabase = Supabase.instance.client;
 
       await supabase.auth.signInWithPassword(email: email, password: password);
 
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/home');
+        Navigator.of(context).pushReplacementNamed('/room-map');
       }
     } catch (e) {
       if (mounted) {
