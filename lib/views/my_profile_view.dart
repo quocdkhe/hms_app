@@ -127,7 +127,8 @@ class _MyProfileViewState extends State<MyProfileView> {
           ).userProfile;
           _newAvatarFile = null;
         });
-
+        // 3. Since there was another async gap (await), we need one more check!
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cập nhật thông tin thành công')),
         );

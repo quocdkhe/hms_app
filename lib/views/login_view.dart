@@ -27,13 +27,16 @@ class _LoginViewState extends State<LoginView> {
 
       await supabase.auth.signInWithPassword(email: email, password: password);
 
-      if (mounted) {
-        await Provider.of<UserProvider>(
-          context,
-          listen: false,
-        ).fetchUserProfile();
-        Navigator.of(context).pushReplacementNamed('/room-map');
-      }
+      // 1. Check if the widget is still here after the Supabase login attempt
+      if (!mounted) return;
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+      // 2. Wait for the profile to be fetched
+      await userProvider.fetchUserProfile();
+
+      // 3. Since there was another async gap (await), we need one more check!
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/room-map');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -77,9 +80,16 @@ class _LoginViewState extends State<LoginView> {
               obscureText: true,
             ),
             const SizedBox(height: 32),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(onPressed: _login, child: const Text('Login')),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _login,
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Login'),
+            ),
           ],
         ),
       ),

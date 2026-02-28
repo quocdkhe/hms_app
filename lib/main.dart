@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hms_app/providers/color_provider.dart';
 import 'package:hms_app/views/find_customer_view.dart';
 import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
@@ -8,6 +9,7 @@ import 'views/room_map_view.dart';
 import 'views/login_view.dart';
 
 import 'package:provider/provider.dart';
+import 'package:hms_app/providers/theme_provider.dart';
 import 'package:hms_app/providers/user_provider.dart';
 
 Future<void> main() async {
@@ -17,7 +19,11 @@ Future<void> main() async {
   );
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => ColorProvider()),
+      ],
       child: const HMSApp(),
     ),
   );
@@ -28,10 +34,23 @@ class HMSApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final colorProvider = Provider.of<ColorProvider>(context);
+
     return MaterialApp(
       title: 'Flutter Demo',
+      themeMode: themeProvider.themeMode,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: colorProvider.primaryColor,
+          brightness: Brightness.light,
+        ),
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: colorProvider.primaryColor,
+          brightness: Brightness.dark,
+        ),
       ),
       initialRoute: '/login',
       routes: {
