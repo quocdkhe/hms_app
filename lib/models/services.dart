@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:hms_app/utils/safe_int_parser.dart';
+import 'package:hms_app/utils/safe_parser.dart';
 
 class Service {
   final int id;
@@ -7,6 +7,8 @@ class Service {
   final String? description;
   final String unit;
   final int pricePerUnit;
+  final String? imageUrl;
+  final bool status;
 
   Service({
     required this.id,
@@ -14,6 +16,8 @@ class Service {
     this.description,
     required this.unit,
     required this.pricePerUnit,
+    this.imageUrl,
+    required this.status,
   });
 
   factory Service.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,8 @@ class Service {
       description: json['description'] as String?,
       unit: json['unit'] as String,
       pricePerUnit: parseInt(json['price_per_unit']),
+      imageUrl: json['image_url'] as String?,
+      status: parseBool(json['status']),
     );
   }
 
@@ -32,6 +38,8 @@ class Service {
     'description': description,
     'unit': unit,
     'price_per_unit': pricePerUnit,
+    'image_url': imageUrl,
+    'status': status,
   };
 
   // Convenience helpers
@@ -46,6 +54,8 @@ class Service {
     String? description,
     String? unit,
     int? pricePerUnit,
+    String? imageUrl,
+    bool? status,
   }) {
     return Service(
       id: id ?? this.id,
@@ -53,11 +63,13 @@ class Service {
       description: description ?? this.description,
       unit: unit ?? this.unit,
       pricePerUnit: pricePerUnit ?? this.pricePerUnit,
+      imageUrl: imageUrl ?? this.imageUrl,
+      status: status ?? this.status,
     );
   }
 
   @override
   String toString() {
-    return 'Service(id: $id, name: $name, description: $description, unit: $unit, pricePerUnit: $pricePerUnit)';
+    return 'Service(id: $id, name: $name, description: $description, unit: $unit, pricePerUnit: $pricePerUnit, imageUrl: $imageUrl, status: $status)';
   }
 }

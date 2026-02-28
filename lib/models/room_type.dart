@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:hms_app/utils/safe_int_parser.dart';
+import 'package:hms_app/utils/safe_parser.dart';
 
 class RoomType {
   final int id;
