@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:hms_app/models/user_profile.dart';
 import 'package:hms_app/repositories/user_repository.dart';
 import 'package:hms_app/utils/file_upload.dart';
 import 'package:hms_app/widgets/app_drawer.dart';
+import 'package:hms_app/providers/user_provider.dart';
 
 class MyProfileView extends StatefulWidget {
   const MyProfileView({super.key});
@@ -31,35 +33,31 @@ class _MyProfileViewState extends State<MyProfileView> {
     super.initState();
     _fullNameController = TextEditingController();
     _emailController = TextEditingController();
-    _loadUserProfile();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      if (userProvider.userProfile == null) {
+        userProvider.fetchUserProfile().then((_) {
+          if (mounted) _populateFields();
+        });
+      } else {
+        _populateFields();
+      }
+    });
   }
 
-  Future<void> _loadUserProfile() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final profile = await _userRepository.getCurrentUserProfile();
-      if (profile != null) {
-        _userProfile = profile;
-        _fullNameController.text = profile.fullName ?? '';
-        _emailController.text = profile.email ?? '';
-        _newAvatarFile = null;
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi tải thông tin: $e')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+  void _populateFields() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final profile = userProvider.userProfile;
+    if (profile != null) {
+      _userProfile = profile;
+      _fullNameController.text = profile.fullName ?? '';
+      _emailController.text = profile.email ?? '';
     }
+    setState(() {
+      _isLoading = false;
+      _newAvatarFile = null;
+    });
   }
 
   Future<void> _pickAvatar() async {
@@ -115,17 +113,18 @@ class _MyProfileViewState extends State<MyProfileView> {
         avatarUrl: updatedAvatarUrl,
       );
 
-      // Successfully updated, locally mirror the state
+      // Successfully updated, trigger provider refetch
       if (mounted) {
+        await Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).fetchUserProfile();
+
         setState(() {
-          _userProfile = UserProfile(
-            id: _userProfile!.id,
-            fullName: _fullNameController.text.trim(),
-            avatarUrl: updatedAvatarUrl,
-            createdAt: _userProfile!.createdAt,
-            updatedAt: DateTime.now(),
-            email: _userProfile!.email,
-          );
+          _userProfile = Provider.of<UserProvider>(
+            context,
+            listen: false,
+          ).userProfile;
           _newAvatarFile = null;
         });
 

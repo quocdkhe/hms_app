@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:provider/provider.dart';
+import 'package:hms_app/providers/user_provider.dart';
+
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
@@ -25,6 +28,10 @@ class _LoginViewState extends State<LoginView> {
       await supabase.auth.signInWithPassword(email: email, password: password);
 
       if (mounted) {
+        await Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).fetchUserProfile();
         Navigator.of(context).pushReplacementNamed('/room-map');
       }
     } catch (e) {

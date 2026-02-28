@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:hms_app/providers/user_provider.dart';
 
 class AppDrawerDestination {
   const AppDrawerDestination(
@@ -60,6 +62,7 @@ class AppDrawer extends StatelessWidget {
     Navigator.of(context).pop(); // close drawer first
     await Supabase.instance.client.auth.signOut();
     if (context.mounted) {
+      Provider.of<UserProvider>(context, listen: false).clearUser();
       Navigator.of(context).pushReplacementNamed('/login');
     }
   }
@@ -84,6 +87,11 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int selectedIndex = _getCurrentIndex(context);
+    final userProvider = Provider.of<UserProvider>(context);
+    final profile = userProvider.userProfile;
+    final fullName = profile?.fullName ?? 'User';
+    final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U';
+    final avatarUrl = profile?.avatarUrl;
 
     return NavigationDrawer(
       selectedIndex: selectedIndex,
@@ -99,19 +107,27 @@ class AppDrawer extends StatelessWidget {
                 CircleAvatar(
                   radius: 36,
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: Text(
-                    'U',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
-                  ),
+                  backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                      ? NetworkImage(avatarUrl)
+                      : null,
+                  child: avatarUrl == null || avatarUrl.isEmpty
+                      ? Text(
+                          initial,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'User',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                Text(
+                  fullName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),

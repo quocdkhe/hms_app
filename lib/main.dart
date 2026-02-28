@@ -7,12 +7,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'views/room_map_view.dart';
 import 'views/login_view.dart';
 
+import 'package:provider/provider.dart';
+import 'package:hms_app/providers/user_provider.dart';
+
 Future<void> main() async {
   await Supabase.initialize(
     url: 'https://tqwmnothdnteccmnbygh.supabase.co',
     anonKey: 'sb_publishable_eliqihAi1W5UcmcK9PmiJQ_TCJcyrAp',
   );
-  runApp(const HMSApp());
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
+      child: const HMSApp(),
+    ),
+  );
 }
 
 class HMSApp extends StatelessWidget {
