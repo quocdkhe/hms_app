@@ -3,6 +3,9 @@ import 'package:hms_app/providers/color_provider.dart';
 import 'package:hms_app/views/find_customer_view.dart';
 import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
+import 'package:hms_app/views/settings/room/room_list.dart';
+import 'package:hms_app/views/settings/room_type/room_type_list.dart';
+import 'package:hms_app/views/settings/service/service_list.dart';
 import 'package:hms_app/views/settings_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'views/room_map_view.dart';
@@ -60,6 +63,9 @@ class HMSApp extends StatelessWidget {
         '/find-customer': (context) => const FindCustomerView(),
         '/settings': (context) => const SettingsView(),
         '/profile': (context) => const MyProfileView(),
+        '/room-type-list': (context) => const RoomTypeList(),
+        '/room-list': (context) => const RoomList(),
+        '/service-list': (context) => const ServiceList(),
       },
     );
   }

@@ -55,21 +55,27 @@ class _SettingsViewState extends State<SettingsView> {
             trailing: const Icon(Icons.chevron_right),
             title: const Text('Loại phòng'),
             subtitle: const Text('Thiết lập danh mục loại phòng'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, '/room-type-list');
+            },
           ),
           ListTile(
             leading: const Icon(Icons.door_front_door, color: Colors.green),
             trailing: const Icon(Icons.chevron_right),
             title: const Text('Phòng'),
             subtitle: const Text('Quản lý thông tin các phòng'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, '/room-list');
+            },
           ),
           ListTile(
             leading: const Icon(Icons.room_service, color: Colors.orange),
             trailing: const Icon(Icons.chevron_right),
             title: const Text('Dịch vụ'),
             subtitle: const Text('Các dịch vụ cung cấp cho khách'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, '/service-list');
+            },
           ),
           const Divider(),
           Padding(
