@@ -5,6 +5,7 @@ import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
 import 'package:hms_app/views/settings/room/room_list.dart';
 import 'package:hms_app/views/settings/room_type/room_type_list.dart';
+import 'package:hms_app/views/settings/service/create_service_view.dart';
 import 'package:hms_app/views/settings/service/service_list.dart';
 import 'package:hms_app/views/settings_view.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -66,6 +67,7 @@ class HMSApp extends StatelessWidget {
         '/room-type-list': (context) => const RoomTypeList(),
         '/room-list': (context) => const RoomList(),
         '/service-list': (context) => const ServiceList(),
+        '/create-service': (context) => const CreateServiceView(),
       },
     );
   }
