@@ -1,15 +1,25 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-Future<String?> uploadToStorage(File file) async {
+Future<String?> uploadToStorage(XFile file) async {
   try {
-    final fileName =
-        '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+    final Uint8List bytes = await file.readAsBytes();
+    final extension = file.name.split('.').last;
+
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$extension';
 
     await Supabase.instance.client.storage
         .from('HMS_images')
-        .upload(fileName, file);
+        .uploadBinary(
+          fileName,
+          bytes,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: 'image/$extension',
+          ),
+        );
 
     return Supabase.instance.client.storage
         .from('HMS_images')

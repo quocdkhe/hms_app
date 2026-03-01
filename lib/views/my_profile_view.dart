@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -26,7 +27,7 @@ class _MyProfileViewState extends State<MyProfileView> {
   late TextEditingController _fullNameController;
   late TextEditingController _emailController;
 
-  File? _newAvatarFile;
+  XFile? _newAvatarFile;
 
   @override
   void initState() {
@@ -65,7 +66,7 @@ class _MyProfileViewState extends State<MyProfileView> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _newAvatarFile = File(pickedFile.path);
+        _newAvatarFile = pickedFile;
       });
     }
   }
@@ -176,7 +177,10 @@ class _MyProfileViewState extends State<MyProfileView> {
                           radius: 60,
                           backgroundColor: Colors.grey.shade300,
                           backgroundImage: _newAvatarFile != null
-                              ? FileImage(_newAvatarFile!) as ImageProvider
+                              ? (kIsWeb
+                                        ? NetworkImage(_newAvatarFile!.path)
+                                        : FileImage(File(_newAvatarFile!.path)))
+                                    as ImageProvider
                               : (_userProfile?.avatarUrl != null &&
                                     _userProfile!.avatarUrl!.isNotEmpty)
                               ? NetworkImage(_userProfile!.avatarUrl!)
