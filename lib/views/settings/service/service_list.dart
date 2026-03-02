@@ -183,8 +183,15 @@ class _ServiceListState extends State<ServiceList> {
                                   color: Colors.grey.shade700,
                                   constraints: const BoxConstraints(),
                                   padding: const EdgeInsets.all(4),
-                                  onPressed: () {
-                                    // TODO: Implement edit logic
+                                  onPressed: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            CreateServiceView(service: service),
+                                      ),
+                                    );
+                                    _loadServices();
                                   },
                                 ),
                                 IconButton(

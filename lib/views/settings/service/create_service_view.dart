@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:hms_app/utils/file_upload.dart';
 import 'package:hms_app/repositories/service_repository.dart';
+import 'package:hms_app/models/services.dart';
 
 class CreateServiceView extends StatefulWidget {
-  const CreateServiceView({super.key});
+  final Service? service;
+
+  const CreateServiceView({super.key, this.service});
 
   @override
   State<CreateServiceView> createState() => _CreateServiceViewState();
@@ -29,10 +32,17 @@ class _CreateServiceViewState extends State<CreateServiceView> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController();
-    _descriptionController = TextEditingController();
-    _unitController = TextEditingController();
-    _priceController = TextEditingController();
+    _nameController = TextEditingController(text: widget.service?.name ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.service?.description ?? '',
+    );
+    _unitController = TextEditingController(text: widget.service?.unit ?? '');
+    _priceController = TextEditingController(
+      text: widget.service?.pricePerUnit.toString() ?? '',
+    );
+    if (widget.service != null) {
+      _status = widget.service!.status;
+    }
   }
 
   Future<void> _pickImage() async {
@@ -76,21 +86,43 @@ class _CreateServiceViewState extends State<CreateServiceView> {
         }
       }
 
-      await _serviceRepository.createService(
-        name: _nameController.text.trim(),
-        description: _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
-        unit: _unitController.text.trim(),
-        pricePerUnit: int.parse(_priceController.text.trim()),
-        imageUrl: uploadedImageUrl,
-        status: _status,
-      );
+      String? finalImageUrl = uploadedImageUrl ?? widget.service?.imageUrl;
+
+      if (widget.service == null) {
+        await _serviceRepository.createService(
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          unit: _unitController.text.trim(),
+          pricePerUnit: int.parse(_priceController.text.trim()),
+          imageUrl: finalImageUrl,
+          status: _status,
+        );
+      } else {
+        await _serviceRepository.updateService(
+          id: widget.service!.id,
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          unit: _unitController.text.trim(),
+          pricePerUnit: int.parse(_priceController.text.trim()),
+          imageUrl: finalImageUrl,
+          status: _status,
+        );
+      }
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Tạo dịch vụ thành công')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.service == null
+                  ? 'Tạo dịch vụ thành công'
+                  : 'Cập nhật dịch vụ thành công',
+            ),
+          ),
+        );
         Navigator.pop(context); // Go back after success
       }
     } catch (e) {
@@ -119,8 +151,11 @@ class _CreateServiceViewState extends State<CreateServiceView> {
 
   @override
   Widget build(BuildContext context) {
+    bool isEditing = widget.service != null;
     return Scaffold(
-      appBar: AppBar(title: const Text('Thêm Dịch Vụ Mới')),
+      appBar: AppBar(
+        title: Text(isEditing ? 'Cập nhật Dịch Vụ' : 'Thêm Dịch Vụ Mới'),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -146,9 +181,18 @@ class _CreateServiceViewState extends State<CreateServiceView> {
                                       as ImageProvider,
                               fit: BoxFit.cover,
                             )
+                          : (widget.service?.imageUrl != null &&
+                                widget.service!.imageUrl!.isNotEmpty)
+                          ? DecorationImage(
+                              image: NetworkImage(widget.service!.imageUrl!),
+                              fit: BoxFit.cover,
+                            )
                           : null,
                     ),
-                    child: _newImageFile == null
+                    child:
+                        (_newImageFile == null &&
+                            (widget.service?.imageUrl == null ||
+                                widget.service!.imageUrl!.isEmpty))
                         ? const Icon(Icons.image, size: 60, color: Colors.grey)
                         : null,
                   ),
@@ -239,7 +283,7 @@ class _CreateServiceViewState extends State<CreateServiceView> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Tạo dịch vụ'),
+                  : Text(isEditing ? 'Cập nhật dịch vụ' : 'Tạo dịch vụ'),
             ),
           ],
         ),
