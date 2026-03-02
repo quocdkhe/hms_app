@@ -99,7 +99,7 @@ class _ServiceListState extends State<ServiceList> {
                   elevation: 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.grey.shade300, width: 1),
+                    // side: BorderSide(color: Colors.grey.shade300, width: 1),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
