@@ -6,6 +6,7 @@ class RoomType {
   final String? imageUrl;
   final String typeName;
   final int numberOfBed;
+  final int pricePerNight;
   final String? description;
 
   RoomType({
@@ -13,6 +14,7 @@ class RoomType {
     this.imageUrl,
     required this.typeName,
     required this.numberOfBed,
+    required this.pricePerNight,
     this.description,
   });
 
@@ -22,6 +24,7 @@ class RoomType {
       imageUrl: json['image_url'] as String?,
       typeName: json['type_name'] as String,
       numberOfBed: parseInt(json['number_of_bed']),
+      pricePerNight: parseInt(json['price_per_night']),
       description: json['description'] as String?,
     );
   }
@@ -32,6 +35,7 @@ class RoomType {
       'image_url': imageUrl,
       'type_name': typeName,
       'number_of_bed': numberOfBed,
+      'price_per_night': pricePerNight,
       'description': description,
     };
   }
