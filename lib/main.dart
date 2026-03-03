@@ -3,6 +3,7 @@ import 'package:hms_app/providers/color_provider.dart';
 import 'package:hms_app/views/find_customer_view.dart';
 import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
+import 'package:hms_app/views/room_details.dart';
 import 'package:hms_app/views/settings/room/room_list.dart';
 import 'package:hms_app/views/settings/room_type/room_type_list.dart';
 import 'package:hms_app/views/settings/service/create_service_view.dart';
@@ -44,6 +45,7 @@ class HMSApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       themeMode: themeProvider.themeMode,
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: colorProvider.primaryColor,
@@ -68,6 +70,21 @@ class HMSApp extends StatelessWidget {
         '/room-list': (context) => const RoomList(),
         '/service-list': (context) => const ServiceList(),
         '/create-service': (context) => const CreateServiceView(),
+      },
+      onGenerateRoute: (settings) {
+        final uri = Uri.parse(settings.name!);
+
+        // Match: /room/:id
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'room-details') {
+          final roomId = uri.pathSegments[1];
+
+          return MaterialPageRoute(
+            builder: (context) => RoomDetailScreen(roomId: roomId),
+          );
+        }
+
+        return null; // fallback
       },
     );
   }
