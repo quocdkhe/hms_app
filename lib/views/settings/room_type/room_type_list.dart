@@ -139,114 +139,134 @@ class _RoomTypeListState extends State<RoomTypeList> {
                 : _filteredRoomTypes.isEmpty
                 ? const Center(child: Text('Không tìm thấy loại phòng nào'))
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(8.0),
                     itemCount: _filteredRoomTypes.length,
                     itemBuilder: (context, index) {
                       final roomType = _filteredRoomTypes[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: colorScheme.outline,
-                            width: 1,
-                          ),
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 8,
                         ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Left Image
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: colorScheme.surfaceContainerLow,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: colorScheme.outline,
-                                  width: 1,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey.shade300, width: 1),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Left Image
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: (roomType.imageUrl != null &&
+                                          roomType.imageUrl!.isNotEmpty)
+                                      ? DecorationImage(
+                                          image: NetworkImage(roomType.imageUrl!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
                                 ),
-                                image:
-                                    (roomType.imageUrl != null &&
-                                        roomType.imageUrl!.isNotEmpty)
-                                    ? DecorationImage(
-                                        image: NetworkImage(roomType.imageUrl!),
-                                        fit: BoxFit.cover,
+                                child: (roomType.imageUrl == null ||
+                                        roomType.imageUrl!.isEmpty)
+                                    ? const Icon(
+                                        Icons.image,
+                                        size: 40,
+                                        color: Colors.grey,
                                       )
                                     : null,
                               ),
-                              child:
-                                  (roomType.imageUrl == null ||
-                                      roomType.imageUrl!.isEmpty)
-                                  ? Center(
-                                      child: Icon(
-                                        Icons.image_not_supported,
-                                        color: colorScheme.onSurfaceVariant,
+                              const SizedBox(width: 16),
+                              // Middle Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      roomType.typeName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
-                                    )
-                                  : null,
-                            ),
-                            const SizedBox(width: 12),
-                            // Info
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${roomType.numberOfBed} giường',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    if (roomType.description != null &&
+                                        roomType.description!.isNotEmpty)
+                                      Text(
+                                        roomType.description!,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Right Side (Price & Buttons)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    roomType.typeName,
+                                    '${roomType.pricePerNight} đ / đêm',
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.blueAccent,
                                     ),
                                   ),
-                                  Text('${roomType.pricePerNight} / đêm'),
-                                  Text('${roomType.numberOfBed} giường'),
-                                  if (roomType.description != null)
-                                    Text(
-                                      roomType.description!,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: colorScheme.onSurfaceVariant,
-                                        fontSize: 13,
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, size: 20),
+                                        color: Colors.grey.shade700,
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(4),
+                                        onPressed: () async {
+                                          await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  CreateRoomTypeView(
+                                                roomType: roomType,
+                                              ),
+                                            ),
+                                          );
+                                          _loadRoomTypes();
+                                        },
                                       ),
-                                    ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, size: 20),
+                                        color: Colors.red.shade400,
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(4),
+                                        onPressed: () =>
+                                            _deleteRoomType(roomType.id),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
-                            ),
-                            // Actions
-                            Column(
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.edit,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                  onPressed: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            CreateRoomTypeView(
-                                              roomType: roomType,
-                                            ),
-                                      ),
-                                    );
-                                    _loadRoomTypes();
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete,
-                                    color: colorScheme.primary,
-                                  ),
-                                  onPressed: () => _deleteRoomType(roomType.id),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
