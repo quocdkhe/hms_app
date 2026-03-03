@@ -60,6 +60,7 @@ class _RoomTypeListState extends State<RoomTypeList> {
   }
 
   Future<void> _deleteRoomType(int id) async {
+    final colorScheme = Theme.of(context).colorScheme;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -72,7 +73,7 @@ class _RoomTypeListState extends State<RoomTypeList> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: colorScheme.error),
             child: const Text('Xóa'),
           ),
         ],
@@ -100,14 +101,14 @@ class _RoomTypeListState extends State<RoomTypeList> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Cài đặt Loại Phòng',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
         elevation: 0,
       ),
       body: Column(
@@ -123,7 +124,7 @@ class _RoomTypeListState extends State<RoomTypeList> {
                 hintText: 'Tìm kiếm',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: Colors.grey.shade200,
+                fillColor: colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -146,9 +147,12 @@ class _RoomTypeListState extends State<RoomTypeList> {
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.black, width: 1),
+                          border: Border.all(
+                            color: colorScheme.outline,
+                            width: 1,
+                          ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,10 +162,10 @@ class _RoomTypeListState extends State<RoomTypeList> {
                               width: 80,
                               height: 80,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
+                                color: colorScheme.surfaceContainerLow,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: Colors.black,
+                                  color: colorScheme.outline,
                                   width: 1,
                                 ),
                                 image:
@@ -176,10 +180,10 @@ class _RoomTypeListState extends State<RoomTypeList> {
                               child:
                                   (roomType.imageUrl == null ||
                                       roomType.imageUrl!.isEmpty)
-                                  ? const Center(
+                                  ? Center(
                                       child: Icon(
                                         Icons.image_not_supported,
-                                        color: Colors.grey,
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
                                     )
                                   : null,
@@ -199,14 +203,13 @@ class _RoomTypeListState extends State<RoomTypeList> {
                                   ),
                                   Text('${roomType.pricePerNight} / đêm'),
                                   Text('${roomType.numberOfBed} giường'),
-                                  const SizedBox(height: 8),
                                   if (roomType.description != null)
                                     Text(
                                       roomType.description!,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        color: Colors.grey.shade600,
+                                        color: colorScheme.onSurfaceVariant,
                                         fontSize: 13,
                                       ),
                                     ),
@@ -217,9 +220,9 @@ class _RoomTypeListState extends State<RoomTypeList> {
                             Column(
                               children: [
                                 IconButton(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.edit,
-                                    color: Colors.grey,
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                   onPressed: () async {
                                     await Navigator.push(
@@ -235,9 +238,9 @@ class _RoomTypeListState extends State<RoomTypeList> {
                                   },
                                 ),
                                 IconButton(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.delete,
-                                    color: Colors.blue,
+                                    color: colorScheme.primary,
                                   ),
                                   onPressed: () => _deleteRoomType(roomType.id),
                                 ),

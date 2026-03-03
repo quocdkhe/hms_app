@@ -6,35 +6,27 @@ import 'package:hms_app/utils/file_upload.dart';
 import 'package:hms_app/repositories/room_type_repository.dart';
 import 'package:hms_app/models/room_type.dart';
 
-
 class CreateRoomTypeView extends StatefulWidget {
   final RoomType? roomType;
 
-
   const CreateRoomTypeView({super.key, this.roomType});
-
 
   @override
   State<CreateRoomTypeView> createState() => _CreateRoomTypeViewState();
 }
 
-
 class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
   final _formKey = GlobalKey<FormState>();
   final _roomTypeRepository = RoomTypeRepository();
 
-
   bool _isSaving = false;
-
 
   late TextEditingController _typeNameController;
   late TextEditingController _priceController;
   late TextEditingController _bedController;
   late TextEditingController _descriptionController;
 
-
   XFile? _newImageFile;
-
 
   @override
   void initState() {
@@ -53,7 +45,6 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
     );
   }
 
-
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -64,19 +55,15 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
     }
   }
 
-
   Future<void> _saveRoomType() async {
     if (!_formKey.currentState!.validate()) return;
-
 
     setState(() {
       _isSaving = true;
     });
 
-
     try {
       String? uploadedImageUrl;
-
 
       if (_newImageFile != null) {
         final uploadedUrl = await uploadToStorage(_newImageFile!);
@@ -97,9 +84,7 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
         }
       }
 
-
       String? finalImageUrl = uploadedImageUrl ?? widget.roomType?.imageUrl;
-
 
       if (widget.roomType == null) {
         await _roomTypeRepository.createRoomType(
@@ -123,7 +108,6 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
           imageUrl: finalImageUrl,
         );
       }
-
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -152,7 +136,6 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
     }
   }
 
-
   @override
   void dispose() {
     _typeNameController.dispose();
@@ -162,16 +145,12 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
-    bool isEditing = widget.roomType != null;
+    final bool isEditing = widget.roomType != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          isEditing ? 'Chỉnh sửa loại phòng' : 'Thêm loại phòng mới',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(isEditing ? 'Chỉnh sửa loại phòng' : 'Thêm loại phòng mới'),
         leading: IconButton(
           icon: const Icon(Icons.chevron_left),
           onPressed: () => Navigator.pop(context),
@@ -185,15 +164,14 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
             Center(
               child: Column(
                 children: [
-                  Container(
-                    height: 180,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black, width: 1),
-                      image: _newImageFile != null
-                          ? DecorationImage(
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      height: 180,
+                      width: double.infinity,
+                      color: Theme.of(context).colorScheme.surfaceContainerLow,
+                      child: _newImageFile != null
+                          ? Image(
                               image:
                                   (kIsWeb
                                           ? NetworkImage(_newImageFile!.path)
@@ -205,36 +183,20 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
                             )
                           : (widget.roomType?.imageUrl != null &&
                                 widget.roomType!.imageUrl!.isNotEmpty)
-                          ? DecorationImage(
-                              image: NetworkImage(widget.roomType!.imageUrl!),
+                          ? Image.network(
+                              widget.roomType!.imageUrl!,
                               fit: BoxFit.cover,
                             )
-                          : null,
-                    ),
-                    child:
-                        (_newImageFile == null &&
-                            (widget.roomType?.imageUrl == null ||
-                                widget.roomType!.imageUrl!.isEmpty))
-                        ? const Center(
-                            child: Icon(
-                              Icons.image_outlined,
-                              size: 64,
-                              color: Colors.grey,
+                          : const Center(
+                              child: Icon(Icons.image_outlined, size: 64),
                             ),
-                          )
-                        : null,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  TextButton.icon(
+                  OutlinedButton.icon(
                     onPressed: _pickImage,
-                    icon: const Icon(
-                      Icons.camera_alt_outlined,
-                      color: Colors.blue,
-                    ),
-                    label: const Text(
-                      'Thay đổi ảnh',
-                      style: TextStyle(color: Colors.black),
-                    ),
+                    icon: const Icon(Icons.camera_alt_outlined),
+                    label: const Text('Thay đổi ảnh'),
                   ),
                   if (_newImageFile != null)
                     const Text(
@@ -245,15 +207,12 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Thông tin phòng',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            _buildFieldLabel('Loại phòng'),
             TextFormField(
               controller: _typeNameController,
-              decoration: _buildInputDecoration('Phòng thường'),
+              decoration: const InputDecoration(
+                labelText: 'Loại phòng',
+                border: OutlineInputBorder(),
+              ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Vui lòng nhập tên loại phòng';
@@ -262,11 +221,13 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
               },
             ),
             const SizedBox(height: 16),
-            _buildFieldLabel('Giá mỗi đêm'),
             TextFormField(
               controller: _priceController,
               keyboardType: TextInputType.number,
-              decoration: _buildInputDecoration('10.000'),
+              decoration: const InputDecoration(
+                labelText: 'Giá mỗi đêm',
+                border: OutlineInputBorder(),
+              ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Vui lòng nhập giá';
@@ -278,11 +239,13 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
               },
             ),
             const SizedBox(height: 16),
-            _buildFieldLabel('Số lượng giường'),
             TextFormField(
               controller: _bedController,
               keyboardType: TextInputType.number,
-              decoration: _buildInputDecoration('1'),
+              decoration: const InputDecoration(
+                labelText: 'Số lượng giường',
+                border: OutlineInputBorder(),
+              ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Vui lòng nhập số giường';
@@ -294,74 +257,31 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
               },
             ),
             const SizedBox(height: 16),
-            _buildFieldLabel('Miêu tả'),
             TextFormField(
               controller: _descriptionController,
-              decoration: _buildInputDecoration('Mô tả chi tiết về phòng...'),
+              decoration: const InputDecoration(
+                labelText: 'Miêu tả',
+                border: OutlineInputBorder(),
+              ),
               maxLines: 4,
             ),
             const SizedBox(height: 32),
-            Center(
-              child: SizedBox(
-                width: 200,
-                child: ElevatedButton(
-                  onPressed: _isSaving ? null : _saveRoomType,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade300,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: const BorderSide(color: Colors.black),
-                    ),
-                  ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.black,
-                          ),
-                        )
-                      : Text(
-                          isEditing ? 'Cập Nhật' : 'Tạo Mới',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                ),
+            ElevatedButton(
+              onPressed: _isSaving ? null : _saveRoomType,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(isEditing ? 'Cập Nhật' : 'Tạo Mới'),
             ),
           ],
         ),
       ),
     );
   }
-
-
-  Widget _buildFieldLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-    );
-  }
-
-
-  InputDecoration _buildInputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.black),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.black),
-      ),
-    );
-  }
 }
-
-
