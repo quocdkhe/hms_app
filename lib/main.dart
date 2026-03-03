@@ -44,6 +44,7 @@ class HMSApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       themeMode: themeProvider.themeMode,
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: colorProvider.primaryColor,
