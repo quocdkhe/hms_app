@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:hms_app/utils/file_upload.dart';
 import 'package:hms_app/repositories/service_repository.dart';
-import 'package:hms_app/models/services.dart';
+import 'package:hms_app/models/service.dart';
 
 class CreateServiceView extends StatefulWidget {
   final Service? service;

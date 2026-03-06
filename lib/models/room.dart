@@ -3,13 +3,13 @@ import 'package:hms_app/utils/safe_parser.dart';
 
 class Room {
   final int id;
-  final int roomNumber;
+  final String roomName;
   final int roomTypeId;
   final int floor;
 
   Room({
     required this.id,
-    required this.roomNumber,
+    required this.roomName,
     required this.roomTypeId,
     required this.floor,
   });
@@ -17,7 +17,7 @@ class Room {
   factory Room.fromJson(Map<String, dynamic> json) {
     return Room(
       id: parseInt(json['id']),
-      roomNumber: parseInt(json['room_number']),
+      roomName: json['room_name'] as String,
       roomTypeId: parseInt(json['room_type_id']),
       floor: parseInt(json['floor']),
     );
@@ -25,7 +25,7 @@ class Room {
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'room_number': roomNumber,
+    'room_name': roomName,
     'room_type_id': roomTypeId,
     'floor': floor,
   };
@@ -36,10 +36,10 @@ class Room {
 
   String toJsonString() => json.encode(toJson());
 
-  Room copyWith({int? id, int? roomNumber, int? roomTypeId, int? floor}) {
+  Room copyWith({int? id, String? roomName, int? roomTypeId, int? floor}) {
     return Room(
       id: id ?? this.id,
-      roomNumber: roomNumber ?? this.roomNumber,
+      roomName: roomName ?? this.roomName,
       roomTypeId: roomTypeId ?? this.roomTypeId,
       floor: floor ?? this.floor,
     );
@@ -47,6 +47,6 @@ class Room {
 
   @override
   String toString() {
-    return 'Room(id: $id, roomNumber: $roomNumber, roomTypeId: $roomTypeId, floor: $floor)';
+    return 'Room(id: $id, roomName: $roomName, roomTypeId: $roomTypeId, floor: $floor)';
   }
 }

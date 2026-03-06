@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hms_app/models/services.dart';
+import 'package:hms_app/models/service.dart';
 import 'package:hms_app/repositories/service_repository.dart';
 import 'package:hms_app/views/settings/service/create_service_view.dart';
 

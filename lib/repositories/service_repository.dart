@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:hms_app/models/services.dart';
+import 'package:hms_app/models/service.dart';
 
 class ServiceRepository {
   final _supabase = Supabase.instance.client;

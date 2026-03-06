@@ -4,6 +4,7 @@ import 'package:hms_app/views/find_customer_view.dart';
 import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
 import 'package:hms_app/views/room_details.dart';
+import 'package:hms_app/views/settings/room/add_room.dart';
 import 'package:hms_app/views/settings/room/room_list.dart';
 import 'package:hms_app/views/settings/room_type/room_type_list.dart';
 import 'package:hms_app/views/settings/service/create_service_view.dart';
@@ -70,6 +71,7 @@ class HMSApp extends StatelessWidget {
         '/room-list': (context) => const RoomList(),
         '/service-list': (context) => const ServiceList(),
         '/create-service': (context) => const CreateServiceView(),
+        '/add-room': (context) => const AddRoom(),
       },
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name!);
@@ -82,6 +84,17 @@ class HMSApp extends StatelessWidget {
           return MaterialPageRoute(
             builder: (context) => RoomDetailScreen(roomId: roomId),
           );
+        }
+
+        // Match: /edit-room/:id
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'edit-room') {
+          final roomId = int.tryParse(uri.pathSegments[1]);
+          if (roomId != null) {
+            return MaterialPageRoute(
+              builder: (context) => AddRoom(roomId: roomId),
+            );
+          }
         }
 
         return null; // fallback
