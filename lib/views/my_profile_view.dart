@@ -26,6 +26,7 @@ class _MyProfileViewState extends State<MyProfileView> {
 
   late TextEditingController _fullNameController;
   late TextEditingController _emailController;
+  late TextEditingController _phoneController;
 
   XFile? _newAvatarFile;
 
@@ -34,6 +35,7 @@ class _MyProfileViewState extends State<MyProfileView> {
     super.initState();
     _fullNameController = TextEditingController();
     _emailController = TextEditingController();
+    _phoneController = TextEditingController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -54,6 +56,7 @@ class _MyProfileViewState extends State<MyProfileView> {
       _userProfile = profile;
       _fullNameController.text = profile.fullName ?? '';
       _emailController.text = profile.email ?? '';
+      _phoneController.text = profile.phone ?? '';
     }
     setState(() {
       _isLoading = false;
@@ -111,6 +114,7 @@ class _MyProfileViewState extends State<MyProfileView> {
       await _userRepository.updateUserProfile(
         id: _userProfile!.id,
         fullName: _fullNameController.text.trim(),
+        phone: _phoneController.text.trim(),
         avatarUrl: updatedAvatarUrl,
       );
 
@@ -153,6 +157,7 @@ class _MyProfileViewState extends State<MyProfileView> {
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -227,6 +232,15 @@ class _MyProfileViewState extends State<MyProfileView> {
                       }
                       return null;
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _phoneController,
+                    decoration: const InputDecoration(
+                      labelText: 'Số điện thoại',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.phone,
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(

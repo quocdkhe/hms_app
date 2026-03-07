@@ -14,7 +14,9 @@ class RoomRepository {
   }
 
   Future<void> createRoom(Room room) async {
-    await _supabase.from('rooms').insert(room.toJson());
+    final data = Map<String, dynamic>.from(room.toJson());
+    data.remove('id');
+    await _supabase.from('rooms').insert(data);
   }
 
   Future<void> deleteRoom(int id) async {

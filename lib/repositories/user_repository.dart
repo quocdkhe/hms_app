@@ -21,13 +21,15 @@ class UserRepository {
   Future<void> updateUserProfile({
     required String id,
     String? fullName,
+    String? phone,
     String? avatarUrl,
   }) async {
     await _supabase
         .from('user_profiles')
         .update({
-          'full_name': ?fullName,
-          'avatar_url': ?avatarUrl,
+          'full_name': fullName,
+          'phone': phone,
+          'avatar_url': avatarUrl,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', id);
