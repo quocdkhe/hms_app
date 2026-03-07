@@ -83,26 +83,32 @@ class RoomDetailScreen extends StatelessWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Trần Thị Bích'),
-            subtitle: const Text('16/10 – 18/10'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-            onTap: () {},
+          Card(
+            clipBehavior: Clip.hardEdge,
+            child: ListTile(
+              title: const Text('Trần Thị Bích'),
+              subtitle: const Text('16/10 – 18/10'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+              onTap: () {},
+            ),
           ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Lê Minh Khoa'),
-            subtitle: const Text('20/10 – 25/10'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-            onTap: () {},
+          Card(
+            clipBehavior: Clip.hardEdge,
+            child: ListTile(
+              title: const Text('Lê Minh Khoa'),
+              subtitle: const Text('20/10 – 25/10'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+              onTap: () {},
+            ),
           ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Phạm Thị Lan'),
-            subtitle: const Text('28/10 – 01/11'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-            onTap: () {},
+          Card(
+            clipBehavior: Clip.hardEdge,
+            child: ListTile(
+              title: const Text('Phạm Thị Lan'),
+              subtitle: const Text('28/10 – 01/11'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+              onTap: () {},
+            ),
           ),
 
           const Divider(height: 32),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hms_app/models/dtos/room_card_item.dart';
+import 'package:hms_app/repositories/booking_repository.dart';
 import 'package:hms_app/views/room_details.dart';
 import 'package:hms_app/widgets/app_drawer.dart';
 
@@ -12,22 +14,6 @@ enum RoomFilter {
   const RoomFilter(this.label);
 }
 
-enum RoomStatus { empty, occupied, checkInToday }
-
-class RoomInfo {
-  final String type;
-  final String number;
-  final String statusLabel;
-  final RoomStatus status;
-
-  const RoomInfo({
-    required this.type,
-    required this.number,
-    required this.statusLabel,
-    required this.status,
-  });
-}
-
 class RoomMapView extends StatefulWidget {
   const RoomMapView({super.key});
 
@@ -38,63 +24,39 @@ class RoomMapView extends StatefulWidget {
 class _RoomMapViewState extends State<RoomMapView> {
   RoomFilter _selectedFilter = RoomFilter.all;
 
-  static const List<RoomInfo> _allRooms = [
-    RoomInfo(
-      type: 'Standard',
-      number: 'S101',
-      statusLabel: 'Trống',
-      status: RoomStatus.empty,
-    ),
-    RoomInfo(
-      type: 'Standard',
-      number: 'S102',
-      statusLabel: 'Đang SD',
-      status: RoomStatus.occupied,
-    ),
-    RoomInfo(
-      type: 'Deluxe',
-      number: 'D201',
-      statusLabel: 'Trống',
-      status: RoomStatus.empty,
-    ),
-    RoomInfo(
-      type: 'Standard',
-      number: 'S202',
-      statusLabel: 'Trống',
-      status: RoomStatus.empty,
-    ),
-    RoomInfo(
-      type: 'Penthouse',
-      number: 'P301',
-      statusLabel: 'Trống',
-      status: RoomStatus.empty,
-    ),
-    RoomInfo(
-      type: 'Standard',
-      number: 'S302',
-      statusLabel: 'Trống',
-      status: RoomStatus.empty,
-    ),
-    RoomInfo(
-      type: 'Standard',
-      number: 'S203',
-      statusLabel: 'Trống',
-      status: RoomStatus.empty,
-    ),
-    RoomInfo(
-      type: 'Standard',
-      number: 'S303',
-      statusLabel: 'Trống',
-      status: RoomStatus.empty,
-    ),
-  ];
+  final _bookingRepository = BookingRepository();
+  List<RoomCardItem> _rooms = [];
+  bool _isLoading = true;
 
-  List<RoomInfo> get _filteredRooms => _allRooms; // TODO: apply filter
+  @override
+  void initState() {
+    super.initState();
+    _loadRooms();
+  }
+
+  Future<void> _loadRooms() async {
+    try {
+      final rooms = await _bookingRepository.getRoomMap();
+      if (mounted) {
+        setState(() {
+          _rooms = rooms;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi tải danh sách phòng: $e')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final rooms = _filteredRooms;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Sơ đồ phòng')),
       drawer: const AppDrawer(),
@@ -121,7 +83,9 @@ class _RoomMapViewState extends State<RoomMapView> {
 
           // ── Lưới phòng ──────────────────────────────────────────
           Expanded(
-            child: rooms.isEmpty
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _rooms.isEmpty
                 ? const Center(child: Text('Không có phòng nào'))
                 : GridView.builder(
                     padding: const EdgeInsets.symmetric(
@@ -135,9 +99,9 @@ class _RoomMapViewState extends State<RoomMapView> {
                           mainAxisSpacing: 12,
                           childAspectRatio: 1.1,
                         ),
-                    itemCount: rooms.length,
+                    itemCount: _rooms.length,
                     itemBuilder: (context, index) =>
-                        _RoomCard(room: rooms[index]),
+                        _RoomCard(room: _rooms[index]),
                   ),
           ),
         ],
@@ -148,19 +112,19 @@ class _RoomMapViewState extends State<RoomMapView> {
 
 // ── Thẻ phòng ─────────────────────────────────────────────────────
 class _RoomCard extends StatelessWidget {
-  final RoomInfo room;
+  final RoomCardItem room;
 
   const _RoomCard({required this.room});
 
   @override
   Widget build(BuildContext context) {
-    final isOccupied = room.status != RoomStatus.empty;
+    final isOccupied = room.status == RoomStatus.using;
 
     return Card(
       child: InkWell(
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => RoomDetailScreen(roomId: room.number),
+            builder: (_) => RoomDetailScreen(roomId: room.roomName),
           ),
         ),
         borderRadius: BorderRadius.circular(12),
@@ -170,10 +134,10 @@ class _RoomCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(room.type, style: const TextStyle(fontSize: 12)),
+              Text(room.roomTypeName, style: const TextStyle(fontSize: 12)),
               const SizedBox(height: 2),
               Text(
-                room.number,
+                room.roomName,
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -189,7 +153,10 @@ class _RoomCard extends StatelessWidget {
                     color: isOccupied ? Colors.red : Colors.green,
                   ),
                   const SizedBox(width: 6),
-                  Text(room.statusLabel, style: const TextStyle(fontSize: 13)),
+                  Text(
+                    isOccupied ? 'Đang SD' : 'Trống',
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ],
               ),
             ],
