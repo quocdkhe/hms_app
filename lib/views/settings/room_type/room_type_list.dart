@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/models/room_type.dart';
 import 'package:hms_app/repositories/room_type_repository.dart';
+import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/views/settings/room_type/create_room_type.dart';
 
 class RoomTypeList extends StatefulWidget {
@@ -164,15 +165,19 @@ class _RoomTypeListState extends State<RoomTypeList> {
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade200,
                                   borderRadius: BorderRadius.circular(8),
-                                  image: (roomType.imageUrl != null &&
+                                  image:
+                                      (roomType.imageUrl != null &&
                                           roomType.imageUrl!.isNotEmpty)
                                       ? DecorationImage(
-                                          image: NetworkImage(roomType.imageUrl!),
+                                          image: NetworkImage(
+                                            roomType.imageUrl!,
+                                          ),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
                                 ),
-                                child: (roomType.imageUrl == null ||
+                                child:
+                                    (roomType.imageUrl == null ||
                                         roomType.imageUrl!.isEmpty)
                                     ? const Icon(
                                         Icons.image,
@@ -224,7 +229,7 @@ class _RoomTypeListState extends State<RoomTypeList> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    '${roomType.pricePerNight} đ / đêm',
+                                    '${formatVND(roomType.pricePerNight)} đ / đêm',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                       color: Colors.blueAccent,
@@ -245,15 +250,18 @@ class _RoomTypeListState extends State<RoomTypeList> {
                                             MaterialPageRoute(
                                               builder: (context) =>
                                                   CreateRoomTypeView(
-                                                roomType: roomType,
-                                              ),
+                                                    roomType: roomType,
+                                                  ),
                                             ),
                                           );
                                           _loadRoomTypes();
                                         },
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.delete, size: 20),
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          size: 20,
+                                        ),
                                         color: Colors.red.shade400,
                                         constraints: const BoxConstraints(),
                                         padding: const EdgeInsets.all(4),
