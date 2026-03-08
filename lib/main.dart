@@ -76,14 +76,15 @@ class HMSApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name!);
 
-        // Match: /room/:id
+        // Match: /room-details/:id
         if (uri.pathSegments.length == 2 &&
             uri.pathSegments.first == 'room-details') {
-          final roomId = uri.pathSegments[1];
-
-          return MaterialPageRoute(
-            builder: (context) => RoomDetailScreen(roomId: roomId),
-          );
+          final roomId = int.tryParse(uri.pathSegments[1]);
+          if (roomId != null) {
+            return MaterialPageRoute(
+              builder: (context) => RoomDetailScreen(roomId: roomId),
+            );
+          }
         }
 
         // Match: /edit-room/:id
@@ -96,7 +97,6 @@ class HMSApp extends StatelessWidget {
             );
           }
         }
-
         return null; // fallback
       },
     );

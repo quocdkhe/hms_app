@@ -1,3 +1,4 @@
+import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/models/room.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -37,5 +38,28 @@ class RoomRepository {
       throw Exception('Không tìm thấy phòng');
     }
     return Room.fromJson(response);
+  }
+
+  Future<RoomDetails> getRoomDetails(int id) async {
+    final response = await _supabase
+        .from('rooms')
+        .select('''
+          id,
+          room_name,
+          floor,
+          room_types(
+            type_name,
+            number_of_bed,
+            price_per_night,
+            description,
+            image_url
+          )
+        ''')
+        .eq('id', id)
+        .maybeSingle();
+    if (response == null) {
+      throw Exception('Không tìm thấy phòng');
+    }
+    return RoomDetails.fromJson(response);
   }
 }

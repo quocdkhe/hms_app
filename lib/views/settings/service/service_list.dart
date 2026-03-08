@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/models/service.dart';
 import 'package:hms_app/repositories/service_repository.dart';
+import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/views/settings/service/create_service_view.dart';
 
 class ServiceList extends StatefulWidget {
@@ -168,7 +169,7 @@ class _ServiceListState extends State<ServiceList> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '${service.pricePerUnit} đ / ${service.unit}',
+                              '${formatVND(service.pricePerUnit)} VND/${service.unit}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: Colors.blueAccent,

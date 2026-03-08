@@ -123,9 +123,7 @@ class _RoomCard extends StatelessWidget {
     return Card(
       child: InkWell(
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => RoomDetailScreen(roomId: room.roomName),
-          ),
+          MaterialPageRoute(builder: (_) => RoomDetailScreen(roomId: room.id)),
         ),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
