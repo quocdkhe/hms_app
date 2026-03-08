@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/providers/color_provider.dart';
+import 'package:hms_app/views/create_booking.dart';
 import 'package:hms_app/views/find_customer_view.dart';
 import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
@@ -94,6 +95,17 @@ class HMSApp extends StatelessWidget {
           if (roomId != null) {
             return MaterialPageRoute(
               builder: (context) => AddRoom(roomId: roomId),
+            );
+          }
+        }
+
+        // Match: /create-booking/:id
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'create-booking') {
+          final roomId = int.tryParse(uri.pathSegments[1]);
+          if (roomId != null) {
+            return MaterialPageRoute(
+              builder: (context) => CreateBookingScreen(roomId: roomId),
             );
           }
         }

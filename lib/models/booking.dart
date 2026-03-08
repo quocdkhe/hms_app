@@ -50,7 +50,7 @@ class Booking {
       id: json['id'] as int,
       roomId: json['room_id'] as int,
       checkInDateTime: DateTime.parse(json['check_in_date_time'] as String),
-      checkoutDateTime: DateTime.parse(json['checkout_date_time'] as String),
+      checkoutDateTime: DateTime.parse(json['check_out_date_time'] as String),
       actualCheckOutDateTime: json['actual_check_out_date_time'] != null
           ? DateTime.parse(json['actual_check_out_date_time'] as String)
           : null,
@@ -69,7 +69,7 @@ class Booking {
       'id': id,
       'room_id': roomId,
       'check_in_date_time': checkInDateTime.toUtc().toIso8601String(),
-      'checkout_date_time': checkoutDateTime.toUtc().toIso8601String(),
+      'check_out_date_time': checkoutDateTime.toUtc().toIso8601String(),
       'actual_check_out_date_time': actualCheckOutDateTime
           ?.toUtc()
           .toIso8601String(),

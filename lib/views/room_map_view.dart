@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/models/dtos/room_card_item.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
-import 'package:hms_app/views/room_details.dart';
 import 'package:hms_app/widgets/app_drawer.dart';
+import 'package:hms_app/widgets/room_card.dart';
 
 enum RoomFilter {
   all('Tất cả'),
@@ -85,81 +85,35 @@ class _RoomMapViewState extends State<RoomMapView> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _rooms.isEmpty
-                ? const Center(child: Text('Không có phòng nào'))
-                : GridView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 1.1,
-                        ),
-                    itemCount: _rooms.length,
-                    itemBuilder: (context, index) =>
-                        _RoomCard(room: _rooms[index]),
+                : RefreshIndicator(
+                    onRefresh: _loadRooms,
+                    child: _rooms.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              SizedBox(height: 100),
+                              Center(child: Text('Không có phòng nào')),
+                            ],
+                          )
+                        : GridView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 1.1,
+                                ),
+                            itemCount: _rooms.length,
+                            itemBuilder: (context, index) =>
+                                RoomCard(room: _rooms[index]),
+                          ),
                   ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Thẻ phòng ─────────────────────────────────────────────────────
-class _RoomCard extends StatelessWidget {
-  final RoomCardItem room;
-
-  const _RoomCard({required this.room});
-
-  @override
-  Widget build(BuildContext context) {
-    final isOccupied = room.status == RoomStatus.using;
-
-    return Card(
-      child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => RoomDetailScreen(roomId: room.id)),
-        ),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(room.roomTypeName, style: const TextStyle(fontSize: 12)),
-              const SizedBox(height: 2),
-              Text(
-                room.roomName,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Icon(
-                    Icons.circle,
-                    size: 6,
-                    color: isOccupied ? Colors.red : Colors.green,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    isOccupied ? 'Đang SD' : 'Trống',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

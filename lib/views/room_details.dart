@@ -57,44 +57,82 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Image section
                   if (room.imageUrl != null)
                     Image.network(
                       room.imageUrl!,
-                      width: 80,
-                      height: 80,
+                      width: 110,
+                      height: 110,
                       fit: BoxFit.cover,
                     )
                   else
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 110,
+                      height: 110,
                       color: Colors.grey[300],
                       child: const Icon(Icons.image, color: Colors.grey),
                     ),
-                  const SizedBox(width: 12),
+
+                  // Content section
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Phòng ${room.roomName} - ${room.typeName}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Phòng ${room.roomName} - ${room.typeName}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Tầng ${room.floor} - ${room.numberOfBed} giường - ${formatVND(room.pricePerNight)} VND/đêm',
-                        ),
-                        if (room.description != null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.bed,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${room.numberOfBed} giường  •  Tầng ${room.floor}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 4),
                           Text(
-                            room.description!,
-                            style: const TextStyle(fontSize: 12),
+                            '${formatVND(room.pricePerNight)} VND/đêm',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green,
+                            ),
                           ),
+                          if (room.description != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              room.description!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ],
@@ -166,7 +204,22 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
 
               // ── Đặt phòng tương lai ────────────────────────────────
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () async {
+                  final result = await Navigator.pushNamed(
+                    context,
+                    '/create-booking/${widget.roomId}',
+                  );
+                  if (result == true && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Đặt phòng thành công!')),
+                    );
+                    setState(() {
+                      _roomDetailsFuture = _roomRepository.getRoomDetails(
+                        widget.roomId,
+                      );
+                    });
+                  }
+                },
                 icon: const Icon(Icons.calendar_month_outlined),
                 label: const Text('Đặt thêm lịch cho phòng này'),
               ),
