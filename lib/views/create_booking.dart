@@ -21,7 +21,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
 
   final _guestNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
   bool _checkInNow = false;
   DateTime? _checkIn;
   DateTime? _checkOut;
@@ -37,7 +36,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   void dispose() {
     _guestNameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
@@ -81,11 +79,9 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   Future<void> _submitBooking() async {
     final name = _guestNameController.text.trim();
     final phone = _phoneController.text.trim();
-    final email = _emailController.text.trim();
 
     if (name.isEmpty ||
         phone.isEmpty ||
-        email.isEmpty ||
         _checkIn == null ||
         _checkOut == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -112,7 +108,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
         roomId: widget.roomId,
         guestName: name,
         guestPhone: phone,
-        guestEmail: email,
         checkInDateTime: _checkIn!,
         checkOutDateTime: _checkOut!,
         checkInNow: _checkInNow,
@@ -271,16 +266,6 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Số điện thoại',
                   prefixIcon: Icon(Icons.phone),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
                   border: OutlineInputBorder(),
                 ),
               ),

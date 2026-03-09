@@ -39,11 +39,12 @@ class BookingRepository {
     required int roomId,
     required String guestName,
     required String guestPhone,
-    required String guestEmail,
     required DateTime checkInDateTime,
     required DateTime checkOutDateTime,
     required bool checkInNow,
   }) async {
+    final guestEmail = '$guestPhone@hms.com';
+
     // Step 1: Find or create user
     var userProfile = await _supabase
         .from('user_profiles')
