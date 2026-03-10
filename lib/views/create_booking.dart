@@ -321,22 +321,9 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
               onPressed: _isSubmitting ? null : _submitBooking,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
               child: _isSubmitting
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text(
-                      'Thu tiền cọc & đặt lịch',
-                      style: TextStyle(fontSize: 16),
-                    ),
+                  ? const CircularProgressIndicator()
+                  : const Text('Thu tiền cọc & đặt lịch'),
             ),
           ),
         );

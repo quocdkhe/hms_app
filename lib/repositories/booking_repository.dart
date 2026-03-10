@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hms_app/models/dtos/booking_schedule_item.dart';
 import 'package:hms_app/models/dtos/room_card_item.dart';
 import 'package:hms_app/models/enums/booking_status.dart';
 import 'package:hms_app/models/enums/user_role.dart';
@@ -30,8 +31,8 @@ class BookingRepository {
         '│ ${r.id.toString().padRight(3)}│ ${r.roomName.padRight(9)}│ ${r.roomTypeName.padRight(12)}│ ${r.status.name.padRight(12)}│',
       );
     }
-    print('└────┴──────────┴─────────────┴─────────────┘');
-    print('Total: ${responseList.length} rooms');
+    debugPrint('└────┴──────────┴─────────────┴─────────────┘');
+    debugPrint('Total: ${responseList.length} rooms');
     return responseList;
   }
 
@@ -43,7 +44,19 @@ class BookingRepository {
     required DateTime checkOutDateTime,
     required bool checkInNow,
   }) async {
+    // Validate booking
+    if (!await _isBookingOverlap(
+      roomId: roomId,
+      checkInDateTime: checkInDateTime,
+      checkOutDateTime: checkOutDateTime,
+    )) {
+      throw Exception('Phòng đã được đặt trong thời gian này!');
+    }
     final guestEmail = '$guestPhone@hms.com';
+
+    if (checkInNow && await _isRoomUsingNow(roomId: roomId)) {
+      throw Exception('Phòng chưa được checkout!');
+    }
 
     // Step 1: Find or create user
     var userProfile = await _supabase
@@ -72,6 +85,8 @@ class BookingRepository {
           .eq('id', userId);
 
       userProfile = {'id': userId};
+    } else {
+      throw Exception('Số điện thoại này đã tồn tại');
     }
 
     // Step 2: Create booking
@@ -87,5 +102,72 @@ class BookingRepository {
           ? BookingStatus.checkedIn.name
           : BookingStatus.confirmed.name,
     });
+  }
+
+  Future<List<BookingScheduleItem>> getBookingSchedule(int roomId) async {
+    final response = await _supabase
+        .from('bookings')
+        .select('''
+          id,
+          user_profiles(full_name, avatar_url),
+          check_in_date_time,
+          check_out_date_time,
+          actual_check_out_date_time,
+          actual_check_in_date_time,
+          status
+        ''')
+        .eq('room_id', roomId)
+        .neq('status', 'checked_out')
+        .order('check_in_date_time', ascending: true);
+    return (response as List)
+        .map((e) => BookingScheduleItem.fromJson(e))
+        .toList();
+  }
+
+  /// --------------------------------------------------------------------
+  /// Helper functions check room is ok to book in this time
+
+  Future<bool> _isBookingOverlap({
+    required int roomId,
+    required DateTime checkInDateTime,
+    required DateTime checkOutDateTime,
+  }) async {
+    // Ensure we always send UTC to Postgres, regardless of local timezone
+    final checkInUtc = checkInDateTime.toUtc();
+    final checkOutUtc = checkOutDateTime.toUtc();
+
+    final response = await _supabase
+        .from('bookings')
+        .select()
+        .eq('room_id', roomId)
+        .neq('status', 'no_show')
+        .or(
+          'actual_check_out_date_time.is.null,actual_check_out_date_time.gt.${checkInUtc.toIso8601String()}',
+        )
+        .lt('check_in_date_time', checkOutUtc.toIso8601String());
+
+    final overlapping = (response as List).where((booking) {
+      final actualCheckOut = booking['actual_check_out_date_time'];
+      final scheduledCheckOut = booking['check_out_date_time'] as String;
+
+      final effectiveCheckOut = actualCheckOut ?? scheduledCheckOut;
+
+      // Parse and convert to UTC for safe comparison
+      final effectiveCheckOutDate = DateTime.parse(effectiveCheckOut).toUtc();
+
+      return effectiveCheckOutDate.isAfter(checkInUtc);
+    }).toList();
+
+    return overlapping.isEmpty;
+  }
+
+  Future<bool> _isRoomUsingNow({required int roomId}) async {
+    final response = await _supabase
+        .from('bookings')
+        .select()
+        .eq('room_id', roomId)
+        .eq('status', 'checked_in')
+        .isFilter('actual_check_out_date_time', null);
+    return (response as List).isNotEmpty;
   }
 }

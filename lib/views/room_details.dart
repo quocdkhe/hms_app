@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hms_app/models/dtos/booking_schedule_item.dart';
+import 'package:hms_app/models/enums/booking_status.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/repositories/room_repository.dart';
 import 'package:hms_app/utils/format_vnd.dart';
@@ -14,12 +16,31 @@ class RoomDetailScreen extends StatefulWidget {
 
 class _RoomDetailScreenState extends State<RoomDetailScreen> {
   late Future<RoomDetails> _roomDetailsFuture;
+  late Future<List<BookingScheduleItem>> _bookingScheduleFuture;
   final _roomRepository = RoomRepository();
 
   @override
   void initState() {
     super.initState();
     _roomDetailsFuture = _roomRepository.getRoomDetails(widget.roomId);
+    _bookingScheduleFuture = _roomRepository.getBookingSchedule(widget.roomId);
+  }
+
+  String _formatDateCompact(DateTime dt) {
+    final toLocal = dt.toLocal();
+    return '${toLocal.day.toString().padLeft(2, '0')}/${toLocal.month.toString().padLeft(2, '0')} ${toLocal.hour.toString().padLeft(2, '0')}:${toLocal.minute.toString().padLeft(2, '0')}';
+  }
+
+  double _calculateProgress(DateTime start, DateTime end) {
+    final now = DateTime.now();
+    if (now.isBefore(start)) return 0.0;
+    if (now.isAfter(end)) return 1.0;
+
+    final totalDuration = end.difference(start).inMilliseconds;
+    final elapsedDuration = now.difference(start).inMilliseconds;
+
+    if (totalDuration <= 0) return 1.0;
+    return elapsedDuration / totalDuration;
   }
 
   @override
@@ -140,90 +161,169 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               // End room details section
               const Divider(height: 32),
 
-              // ── Khách đang ở ───────────────────────────────────────
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Khách đang ở',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(child: Icon(Icons.person)),
-                title: Text('Nguyễn Văn An'),
-                subtitle: Text('12/10 – 15/10 (3 đêm)'),
-              ),
-              const LinearProgressIndicator(value: 0.45),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () {},
-                child: const Text('Quản lý lưu trú'),
-              ),
-
-              const Divider(height: 32),
-
-              // ── Đặt phòng sắp tới ──────────────────────────────────
-              const Text(
-                'Đặt phòng sắp tới',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                clipBehavior: Clip.hardEdge,
-                child: ListTile(
-                  title: const Text('Trần Thị Bích'),
-                  subtitle: const Text('16/10 – 18/10'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                  onTap: () {},
-                ),
-              ),
-              Card(
-                clipBehavior: Clip.hardEdge,
-                child: ListTile(
-                  title: const Text('Lê Minh Khoa'),
-                  subtitle: const Text('20/10 – 25/10'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                  onTap: () {},
-                ),
-              ),
-              Card(
-                clipBehavior: Clip.hardEdge,
-                child: ListTile(
-                  title: const Text('Phạm Thị Lan'),
-                  subtitle: const Text('28/10 – 01/11'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                  onTap: () {},
-                ),
-              ),
-
-              const Divider(height: 32),
-
-              // ── Đặt phòng tương lai ────────────────────────────────
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final result = await Navigator.pushNamed(
-                    context,
-                    '/create-booking/${widget.roomId}',
-                  );
-                  if (result == true && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đặt phòng thành công!')),
+              FutureBuilder<List<BookingScheduleItem>>(
+                future: _bookingScheduleFuture,
+                builder: (context, scheduleSnapshot) {
+                  if (scheduleSnapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
                     );
-                    setState(() {
-                      _roomDetailsFuture = _roomRepository.getRoomDetails(
-                        widget.roomId,
-                      );
-                    });
                   }
+                  if (scheduleSnapshot.hasError) {
+                    return Center(
+                      child: Text('Lỗi tải lịch: ${scheduleSnapshot.error}'),
+                    );
+                  }
+
+                  final schedules = scheduleSnapshot.data ?? [];
+                  final checkedInList = schedules
+                      .where((s) => s.status == BookingStatus.checkedIn)
+                      .toList();
+                  final currentGuest = checkedInList.isNotEmpty
+                      ? checkedInList.first
+                      : null;
+                  final upcomingList = schedules
+                      .where(
+                        (s) =>
+                            s.status != BookingStatus.checkedIn &&
+                            s.status != BookingStatus.checkedOut,
+                      )
+                      .toList();
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Khách đang ở ───────────────────────────────────────
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Khách đang ở',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (currentGuest != null) ...[
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: CircleAvatar(
+                            backgroundImage: currentGuest.customerAvatar != null
+                                ? NetworkImage(currentGuest.customerAvatar!)
+                                : null,
+                            child: currentGuest.customerAvatar == null
+                                ? const Icon(Icons.person)
+                                : null,
+                          ),
+                          title: Text(currentGuest.customerName),
+                          subtitle: Text(
+                            '${_formatDateCompact(currentGuest.actualCheckInDateTime ?? currentGuest.checkInDateTime)} – ${_formatDateCompact(currentGuest.checkoutDateTime)}',
+                          ),
+                        ),
+                        LinearProgressIndicator(
+                          value: _calculateProgress(
+                            currentGuest.actualCheckInDateTime ??
+                                currentGuest.checkInDateTime,
+                            currentGuest.checkoutDateTime,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {},
+                            child: const Text('Quản lý lưu trú'),
+                          ),
+                        ),
+                      ] else ...[
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Phòng trống',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+
+                      const Divider(height: 32),
+
+                      // ── Đặt phòng sắp tới ──────────────────────────────────
+                      const Text(
+                        'Đặt phòng sắp tới',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (upcomingList.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            'Không có lịch đặt trước',
+                            style: TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )
+                      else
+                        ...upcomingList.map(
+                          (s) => Card(
+                            clipBehavior: Clip.hardEdge,
+                            child: ListTile(
+                              title: Text(s.customerName),
+                              subtitle: Text(
+                                '${_formatDateCompact(s.checkInDateTime)} – ${_formatDateCompact(s.checkoutDateTime)}',
+                              ),
+                              trailing: const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 14,
+                              ),
+                              onTap: () {},
+                            ),
+                          ),
+                        ),
+
+                      const Divider(height: 32),
+                    ],
+                  );
                 },
-                icon: const Icon(Icons.calendar_month_outlined),
-                label: const Text('Đặt thêm lịch cho phòng này'),
               ),
             ],
+          ),
+          bottomNavigationBar: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final result = await Navigator.pushNamed(
+                  context,
+                  '/create-booking/${widget.roomId}',
+                );
+                if (result == true && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đặt phòng thành công!')),
+                  );
+                  setState(() {
+                    _roomDetailsFuture = _roomRepository.getRoomDetails(
+                      widget.roomId,
+                    );
+                    _bookingScheduleFuture = _roomRepository.getBookingSchedule(
+                      widget.roomId,
+                    );
+                  });
+                }
+              },
+              icon: const Icon(Icons.calendar_month_outlined),
+              label: const Text('Đặt thêm lịch cho phòng này'),
+            ),
           ),
         );
       },

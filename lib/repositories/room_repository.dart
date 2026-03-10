@@ -1,3 +1,4 @@
+import 'package:hms_app/models/dtos/booking_schedule_item.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/models/room.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -61,5 +62,24 @@ class RoomRepository {
       throw Exception('Không tìm thấy phòng');
     }
     return RoomDetails.fromJson(response);
+  }
+
+  Future<List<BookingScheduleItem>> getBookingSchedule(int roomId) async {
+    final response = await _supabase
+        .from('bookings')
+        .select('''
+          id,
+          user_profiles(full_name, avatar_url),
+          check_in_date_time,
+          check_out_date_time,
+          actual_check_out_date_time,
+          actual_check_in_date_time,
+          status
+        ''')
+        .eq('room_id', roomId)
+        .order('check_in_date_time', ascending: true);
+    return (response as List)
+        .map((e) => BookingScheduleItem.fromJson(e))
+        .toList();
   }
 }
