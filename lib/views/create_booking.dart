@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hms_app/models/dtos/customer_short_detail.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
-import 'package:hms_app/repositories/room_repository.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
+import 'package:hms_app/repositories/room_repository.dart';
+import 'package:hms_app/repositories/user_repository.dart';
 import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/widgets/date_time_picker.dart';
 
@@ -18,9 +20,13 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   late Future<RoomDetails> _roomDetailsFuture;
   final _roomRepository = RoomRepository();
   final _bookingRepository = BookingRepository();
+  final _userRepository = UserRepository();
 
   final _guestNameController = TextEditingController();
   final _phoneController = TextEditingController();
+  late Future<List<CustomerShortDetail>> _customersFuture;
+  bool _isNewCustomer = true;
+  CustomerShortDetail? _selectedCustomer;
   bool _checkInNow = false;
   DateTime? _checkIn;
   DateTime? _checkOut;
@@ -30,6 +36,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   void initState() {
     super.initState();
     _roomDetailsFuture = _roomRepository.getRoomDetails(widget.roomId);
+    _customersFuture = _userRepository.getAllCustomers();
   }
 
   @override
@@ -77,23 +84,39 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
   }
 
   Future<void> _submitBooking() async {
-    final name = _guestNameController.text.trim();
-    final phone = _phoneController.text.trim();
+    final String name;
+    final String phone;
+
+    if (_isNewCustomer) {
+      name = _guestNameController.text.trim();
+      phone = _phoneController.text.trim();
+    } else {
+      name = _selectedCustomer?.name ?? '';
+      phone = _selectedCustomer?.phone ?? '';
+    }
 
     if (name.isEmpty ||
         phone.isEmpty ||
         _checkIn == null ||
         _checkOut == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng điền đầy đủ thông tin')),
+        SnackBar(
+          content: Text(
+            _isNewCustomer
+                ? 'Vui lòng điền đầy đủ thông tin'
+                : 'Vui lòng chọn khách và điền thời gian',
+          ),
+        ),
       );
       return;
     }
 
-    if (_checkOut!.isBefore(_checkIn!)) {
+    if (_checkOut!.difference(_checkIn!).inDays < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ngày trả phòng phải sau ngày nhận phòng'),
+          content: Text(
+            'Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 ngày',
+          ),
         ),
       );
       return;
@@ -246,29 +269,158 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
               const SizedBox(height: 20),
 
               // ── Section 2: Guest information ─────────────────────
-              const Text(
-                'Thông tin khách',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Thông tin khách',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  ToggleButtons(
+                    isSelected: [_isNewCustomer, !_isNewCustomer],
+                    onPressed: (index) {
+                      setState(() {
+                        _isNewCustomer = index == 0;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    constraints: const BoxConstraints(
+                      minHeight: 36,
+                      minWidth: 90,
+                    ),
+                    children: const [
+                      Text('Khách mới', style: TextStyle(fontSize: 13)),
+                      Text('Khách cũ', style: TextStyle(fontSize: 13)),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: _guestNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Họ và tên khách',
-                  prefixIcon: Icon(Icons.person),
-                  border: OutlineInputBorder(),
+              if (_isNewCustomer) ...[
+                // New customer: fill in name + phone
+                TextField(
+                  controller: _guestNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Họ và tên khách',
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Số điện thoại',
-                  prefixIcon: Icon(Icons.phone),
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Số điện thoại',
+                    prefixIcon: Icon(Icons.phone),
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
+              ] else ...[
+                // Old customer: pick from dropdown filtered by phone/name
+                FutureBuilder<List<CustomerShortDetail>>(
+                  future: _customersFuture,
+                  builder: (context, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+                    if (snap.hasError) {
+                      return Text(
+                        'Lỗi tải danh sách khách: ${snap.error}',
+                        style: const TextStyle(color: Colors.red),
+                      );
+                    }
+                    final customers = snap.data ?? [];
+                    return DropdownMenu<CustomerShortDetail>(
+                      hintText: 'Tìm theo số điện thoại hoặc tên...',
+                      enableFilter: true,
+                      expandedInsets: EdgeInsets.zero,
+                      leadingIcon: const Icon(Icons.search),
+                      onSelected: (value) =>
+                          setState(() => _selectedCustomer = value),
+                      dropdownMenuEntries: customers
+                          .map(
+                            (c) => DropdownMenuEntry<CustomerShortDetail>(
+                              value: c,
+                              // Searched text matches against this label
+                              label: c.phone,
+                              leadingIcon: CircleAvatar(
+                                radius: 16,
+                                backgroundImage: c.avatar?.isNotEmpty == true
+                                    ? NetworkImage(c.avatar!)
+                                    : null,
+                                child: c.avatar?.isNotEmpty == true
+                                    ? null
+                                    : Text(
+                                        c.name.isNotEmpty
+                                            ? c.name[0].toUpperCase()
+                                            : '?',
+                                      ),
+                              ),
+                              labelWidget: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    c.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    c.phone,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
+                ),
+                // Selected customer card
+                if (_selectedCustomer != null) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    // color: Theme.of(context).colorScheme.primaryContainer,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage:
+                            _selectedCustomer!.avatar?.isNotEmpty == true
+                            ? NetworkImage(_selectedCustomer!.avatar!)
+                            : null,
+                        child: _selectedCustomer!.avatar?.isNotEmpty == true
+                            ? null
+                            : Text(
+                                _selectedCustomer!.name.isNotEmpty
+                                    ? _selectedCustomer!.name[0].toUpperCase()
+                                    : '?',
+                              ),
+                      ),
+                      title: Text(
+                        _selectedCustomer!.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(_selectedCustomer!.phone),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.close),
+                        tooltip: 'Bỏ chọn',
+                        onPressed: () =>
+                            setState(() => _selectedCustomer = null),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
 
               const SizedBox(height: 20),
 

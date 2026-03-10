@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:hms_app/models/dtos/customer_short_detail.dart';
+import 'package:hms_app/models/enums/user_role.dart';
 import 'package:hms_app/models/user_profile.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -33,5 +36,14 @@ class UserRepository {
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', id);
+  }
+
+  Future<List<CustomerShortDetail>> getAllCustomers() async {
+    final data = await _supabase
+        .from('user_profiles')
+        .select()
+        .eq('role', UserRole.customer.label);
+    debugPrint(data.toString());
+    return data.map((e) => CustomerShortDetail.fromJson(e)).toList();
   }
 }
