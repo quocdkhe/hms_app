@@ -23,7 +23,7 @@ class _StayManagementState extends State<StayManagement> {
   @override
   void initState() {
     super.initState();
-    _detailsFuture = _bookingRepository.getBookingDetails(widget.bookingId);
+    _detailsFuture = _bookingRepository.getCurrentStayDetails(widget.bookingId);
   }
 
   Future<void> _pickCheckout() async {

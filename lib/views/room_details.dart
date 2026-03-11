@@ -290,7 +290,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
-                                  '/stay-management/${s.id}',
+                                  '/booking-details/${s.id}',
                                 );
                               },
                             ),

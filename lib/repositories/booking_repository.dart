@@ -82,27 +82,24 @@ class BookingRepository {
     });
   }
 
-  Future<List<BookingScheduleItem>> getBookingSchedule(int roomId) async {
+  Future<BookingScheduleItem> getBookingDetails(int bookingId) async {
     final response = await _supabase
         .from('bookings')
         .select('''
           id,
-          user_profiles(full_name, avatar_url),
+          user_profiles(full_name, avatar_url, phone),
           check_in_date_time,
           check_out_date_time,
           actual_check_out_date_time,
           actual_check_in_date_time,
           status
         ''')
-        .eq('room_id', roomId)
-        .neq('status', 'checked_out')
-        .order('check_in_date_time', ascending: true);
-    return (response as List)
-        .map((e) => BookingScheduleItem.fromJson(e))
-        .toList();
+        .eq('id', bookingId)
+        .single();
+    return BookingScheduleItem.fromJson(response);
   }
 
-  Future<BookingDetails> getBookingDetails(int bookingId) async {
+  Future<BookingDetails> getCurrentStayDetails(int bookingId) async {
     final booking = await _supabase
         .from('bookings')
         .select('''

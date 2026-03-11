@@ -19,7 +19,6 @@ class ServiceUsage {
 class BookingDetails extends BookingScheduleItem {
   // service usage
   final List<ServiceUsage> usedServices;
-  final String? customerPhone;
 
   BookingDetails({
     required super.id,
@@ -30,8 +29,8 @@ class BookingDetails extends BookingScheduleItem {
     super.actualCheckOutDateTime,
     super.actualCheckInDateTime,
     required super.status,
+    required super.customerPhone,
     required this.usedServices,
-    this.customerPhone,
   });
 
   factory BookingDetails.fromJson(
@@ -42,7 +41,7 @@ class BookingDetails extends BookingScheduleItem {
       id: booking['id'] as int,
       customerAvatar: booking['user_profiles']['avatar_url'] as String?,
       customerName: booking['user_profiles']['full_name'] as String,
-      customerPhone: booking['user_profiles']['phone'] as String?,
+      customerPhone: booking['user_profiles']['phone'] as String,
       checkInDateTime: DateTime.parse(booking['check_in_date_time'] as String),
       checkoutDateTime: DateTime.parse(
         booking['check_out_date_time'] as String,

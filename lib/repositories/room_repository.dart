@@ -69,7 +69,7 @@ class RoomRepository {
         .from('bookings')
         .select('''
           id,
-          user_profiles(full_name, avatar_url),
+          user_profiles(full_name, avatar_url, phone),
           check_in_date_time,
           check_out_date_time,
           actual_check_out_date_time,
@@ -77,6 +77,7 @@ class RoomRepository {
           status
         ''')
         .eq('room_id', roomId)
+        .neq('status', 'checked_out')
         .order('check_in_date_time', ascending: true);
     return (response as List)
         .map((e) => BookingScheduleItem.fromJson(e))

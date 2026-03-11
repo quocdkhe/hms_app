@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/providers/color_provider.dart';
+import 'package:hms_app/views/booking_details_view.dart';
 import 'package:hms_app/views/create_booking.dart';
 import 'package:hms_app/views/find_customer_view.dart';
 import 'package:hms_app/views/find_room_view.dart';
@@ -118,6 +119,17 @@ class HMSApp extends StatelessWidget {
           if (bookingId != null) {
             return MaterialPageRoute(
               builder: (context) => StayManagement(bookingId: bookingId),
+            );
+          }
+        }
+
+        // Match: /booking-details/:id
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'booking-details') {
+          final bookingId = int.tryParse(uri.pathSegments[1]);
+          if (bookingId != null) {
+            return MaterialPageRoute(
+              builder: (context) => BookingDetailsScreen(bookingId: bookingId),
             );
           }
         }

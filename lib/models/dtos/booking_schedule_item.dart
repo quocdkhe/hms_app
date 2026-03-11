@@ -6,6 +6,7 @@ class BookingScheduleItem {
   final int id;
   final String? customerAvatar;
   final String customerName;
+  final String customerPhone;
   final DateTime checkInDateTime;
   final DateTime checkoutDateTime;
   final DateTime? actualCheckOutDateTime;
@@ -16,6 +17,7 @@ class BookingScheduleItem {
     required this.id,
     required this.customerAvatar,
     required this.customerName,
+    required this.customerPhone,
     required this.checkInDateTime,
     required this.checkoutDateTime,
     this.actualCheckOutDateTime,
@@ -28,6 +30,7 @@ class BookingScheduleItem {
       id: json['id'] as int,
       customerAvatar: json['user_profiles']['avatar_url'] as String?,
       customerName: json['user_profiles']['full_name'] as String,
+      customerPhone: json['user_profiles']['phone'] as String,
       checkInDateTime: DateTime.parse(json['check_in_date_time'] as String),
       checkoutDateTime: DateTime.parse(json['check_out_date_time'] as String),
       actualCheckOutDateTime: json['actual_check_out_date_time'] != null
