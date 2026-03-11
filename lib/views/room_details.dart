@@ -287,7 +287,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 Icons.arrow_forward_ios,
                                 size: 14,
                               ),
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/stay-management/${s.id}',
+                                );
+                              },
                             ),
                           ),
                         ),

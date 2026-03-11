@@ -11,6 +11,7 @@ import 'package:hms_app/views/settings/room_type/room_type_list.dart';
 import 'package:hms_app/views/settings/service/create_service_view.dart';
 import 'package:hms_app/views/settings/service/service_list.dart';
 import 'package:hms_app/views/settings_view.dart';
+import 'package:hms_app/views/stay_management.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'views/room_map_view.dart';
 import 'views/login_view.dart';
@@ -109,7 +110,17 @@ class HMSApp extends StatelessWidget {
             );
           }
         }
-        return null; // fallback
+
+        // Match: /stay-management/:id
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'stay-management') {
+          final bookingId = int.tryParse(uri.pathSegments[1]);
+          if (bookingId != null) {
+            return MaterialPageRoute(
+              builder: (context) => StayManagement(bookingId: bookingId),
+            );
+          }
+        }
       },
     );
   }

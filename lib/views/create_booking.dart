@@ -343,7 +343,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                     }
                     final customers = snap.data ?? [];
                     return DropdownMenu<CustomerShortDetail>(
-                      hintText: 'Tìm theo số điện thoại hoặc tên...',
+                      hintText: 'Nhập số điện thoại khách hàng...',
                       enableFilter: true,
                       expandedInsets: EdgeInsets.zero,
                       leadingIcon: const Icon(Icons.search),

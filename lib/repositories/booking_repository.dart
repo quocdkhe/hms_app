@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hms_app/models/dtos/booking_details.dart';
 import 'package:hms_app/models/dtos/booking_schedule_item.dart';
 import 'package:hms_app/models/dtos/room_card_item.dart';
 import 'package:hms_app/models/enums/booking_status.dart';
-import 'package:hms_app/models/enums/user_role.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BookingRepository {
@@ -100,6 +100,41 @@ class BookingRepository {
     return (response as List)
         .map((e) => BookingScheduleItem.fromJson(e))
         .toList();
+  }
+
+  Future<BookingDetails> getBookingDetails(int bookingId) async {
+    final booking = await _supabase
+        .from('bookings')
+        .select('''
+          id,
+          user_profiles(full_name, avatar_url, phone),
+          check_in_date_time,
+          check_out_date_time,
+          actual_check_out_date_time,
+          actual_check_in_date_time,
+          status
+        ''')
+        .eq('id', bookingId)
+        .single();
+    final services = await _supabase
+        .from('services')
+        .select('''
+          id,
+          name,
+          price_per_unit,
+          description,
+          unit,
+          image_url,
+          status,
+          service_usage!left(
+            booking_id,
+            quantity
+          )
+        ''')
+        .eq('status', true)
+        .eq('service_usage.booking_id', bookingId);
+
+    return BookingDetails.fromJson(booking, services);
   }
 
   /// --------------------------------------------------------------------
