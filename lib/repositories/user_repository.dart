@@ -46,4 +46,30 @@ class UserRepository {
     debugPrint(data.toString());
     return data.map((e) => CustomerShortDetail.fromJson(e)).toList();
   }
+
+  Future<String> getNewlyCreatedCustomerId(
+    String guestName,
+    String guestPhone,
+  ) async {
+    final guestEmail = '$guestPhone@hms.com';
+    // Sign up creates auth.users → trigger auto-creates user_profiles row
+    final authResponse = await _supabase.auth.signUp(
+      email: guestEmail,
+      password: '123123',
+    );
+
+    final userId = authResponse.user!.id;
+
+    // Update the auto-created profile with guest info
+    await _supabase
+        .from('user_profiles')
+        .update({
+          'full_name': guestName,
+          'phone': guestPhone,
+          'role': UserRole.customer.label,
+        })
+        .eq('id', userId);
+
+    return userId;
+  }
 }

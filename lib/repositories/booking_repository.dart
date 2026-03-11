@@ -38,8 +38,7 @@ class BookingRepository {
 
   Future<void> createBooking({
     required int roomId,
-    required String guestName,
-    required String guestPhone,
+    required String userId,
     required DateTime checkInDateTime,
     required DateTime checkOutDateTime,
     required bool checkInNow,
@@ -52,7 +51,6 @@ class BookingRepository {
     )) {
       throw Exception('Phòng đã được đặt trong thời gian này!');
     }
-    final guestEmail = '$guestPhone@hms.com';
 
     if (checkInNow && await _isRoomUsingNow(roomId: roomId)) {
       throw Exception('Phòng chưa được checkout!');
@@ -62,37 +60,17 @@ class BookingRepository {
     var userProfile = await _supabase
         .from('user_profiles')
         .select('id')
-        .eq('email', guestEmail)
+        .eq('id', userId)
         .maybeSingle();
 
     if (userProfile == null) {
-      // Sign up creates auth.users → trigger auto-creates user_profiles row
-      final authResponse = await _supabase.auth.signUp(
-        email: guestEmail,
-        password: '123123',
-      );
-
-      final userId = authResponse.user!.id;
-
-      // Update the auto-created profile with guest info
-      await _supabase
-          .from('user_profiles')
-          .update({
-            'full_name': guestName,
-            'phone': guestPhone,
-            'role': UserRole.customer.label,
-          })
-          .eq('id', userId);
-
-      userProfile = {'id': userId};
-    } else {
-      throw Exception('Số điện thoại này đã tồn tại');
+      throw Exception('Số điện thoại này chưa được đăng ký');
     }
 
     // Step 2: Create booking
     await _supabase.from('bookings').insert({
       'room_id': roomId,
-      'user_id': userProfile['id'],
+      'user_id': userId,
       'check_in_date_time': checkInDateTime.toUtc().toIso8601String(),
       'actual_check_in_date_time': checkInNow
           ? checkInDateTime.toUtc().toIso8601String()
