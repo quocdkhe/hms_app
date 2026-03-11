@@ -127,10 +127,16 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     });
 
     try {
+      final String userId;
+      if (_isNewCustomer) {
+        userId = await _userRepository.getNewlyCreatedCustomerId(name, phone);
+      } else {
+        userId = _selectedCustomer!.userId;
+      }
+
       await _bookingRepository.createBooking(
         roomId: widget.roomId,
-        guestName: name,
-        guestPhone: phone,
+        userId: userId,
         checkInDateTime: _checkIn!,
         checkOutDateTime: _checkOut!,
         checkInNow: _checkInNow,
