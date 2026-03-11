@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/models/dtos/booking_details.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
+import 'package:hms_app/utils/format_vnd.dart';
+import 'package:hms_app/widgets/date_time_picker.dart';
 import 'package:hms_app/widgets/service_card.dart';
 import 'package:hms_app/widgets/time_row.dart';
 
@@ -16,11 +18,46 @@ class StayManagement extends StatefulWidget {
 class _StayManagementState extends State<StayManagement> {
   late Future<BookingDetails> _detailsFuture;
   final _bookingRepository = BookingRepository();
+  DateTime? _checkoutDateTime;
 
   @override
   void initState() {
     super.initState();
     _detailsFuture = _bookingRepository.getBookingDetails(widget.bookingId);
+  }
+
+  Future<void> _pickCheckout() async {
+    final current = _checkoutDateTime!;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+    );
+    if (time == null || !mounted) return;
+    setState(() {
+      _checkoutDateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
+
+  String _formatDt(DateTime dt) {
+    final l = dt.toLocal();
+    final d = l.day.toString().padLeft(2, '0');
+    final m = l.month.toString().padLeft(2, '0');
+    final h = l.hour.toString().padLeft(2, '0');
+    final min = l.minute.toString().padLeft(2, '0');
+    return '$d/$m/${l.year} $h:$min';
   }
 
   @override
@@ -47,6 +84,8 @@ class _StayManagementState extends State<StayManagement> {
         }
 
         final details = snapshot.data!;
+        _checkoutDateTime ??=
+            details.actualCheckOutDateTime ?? details.checkoutDateTime;
         final colorScheme = Theme.of(context).colorScheme;
         final textTheme = Theme.of(context).textTheme;
 
@@ -154,13 +193,41 @@ class _StayManagementState extends State<StayManagement> {
                   ),
                 ),
               ),
-              ServiceCard(
-                imageUrl: "imageUrl",
-                title: "abc",
-                subtitle: "subtitle",
-                unit: "KG",
+              const SizedBox(height: 12),
+              DateTimePicker(
+                label: 'Gia hạn thời gian ở',
+                icon: Icons.schedule_outlined,
+                value: _formatDt(_checkoutDateTime!),
+                onTap: _pickCheckout,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Phí dịch vụ',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...details.usedServices.map(
+                (usage) => ServiceCard(
+                  imageUrl: usage.service.imageUrl ?? '',
+                  title: usage.service.name,
+                  subtitle:
+                      '${formatVND(usage.service.pricePerUnit)} VND / ${usage.service.unit}',
+                  unit: usage.service.unit,
+                  initialQuantity: usage.quantity,
+                ),
               ),
             ],
+          ),
+          bottomNavigationBar: Container(
+            padding: const EdgeInsets.all(16),
+            child: ElevatedButton(
+              onPressed: () {
+                // TODO: Handle check-out
+              },
+              child: const Text('Thanh toán'),
+            ),
           ),
         );
       },
