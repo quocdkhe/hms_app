@@ -237,7 +237,22 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              final result = await Navigator.pushNamed(
+                                context,
+                                '/stay-management/${currentGuest.id}',
+                              );
+                              if (result == true && mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Thao tác thành công!')),
+                                );
+                                setState(() {
+                                  _bookingScheduleFuture = _roomRepository.getBookingSchedule(
+                                    widget.roomId,
+                                  );
+                                });
+                              }
+                            },
                             child: const Text('Quản lý lưu trú'),
                           ),
                         ),
@@ -317,9 +332,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     const SnackBar(content: Text('Đặt phòng thành công!')),
                   );
                   setState(() {
-                    _roomDetailsFuture = _roomRepository.getRoomDetails(
-                      widget.roomId,
-                    );
+                    // _roomDetailsFuture = _roomRepository.getRoomDetails(
+                    //   widget.roomId,
+                    // );
                     _bookingScheduleFuture = _roomRepository.getBookingSchedule(
                       widget.roomId,
                     );
