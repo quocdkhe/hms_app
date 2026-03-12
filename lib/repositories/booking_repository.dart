@@ -134,6 +134,20 @@ class BookingRepository {
     return BookingDetails.fromJson(booking, services);
   }
 
+  Future<void> deleteBooking(int bookingId) async {
+    await _supabase.from('bookings').delete().eq('id', bookingId);
+  }
+
+  Future<void> checkIn(int bookingId) async {
+    await _supabase
+        .from('bookings')
+        .update({
+          'status': BookingStatus.checkedIn.name,
+          'actual_check_in_date_time': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', bookingId);
+  }
+
   /// --------------------------------------------------------------------
   /// Helper functions check room is ok to book in this time
 

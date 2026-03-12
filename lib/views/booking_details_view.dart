@@ -18,6 +18,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   DateTime? _checkIn;
   DateTime? _checkOut;
+  bool _isDeleting = false;
+  bool _isCheckingIn = false;
 
   @override
   void initState() {
@@ -53,6 +55,79 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         _checkOut = result;
       }
     });
+  }
+
+  Future<void> _handleCheckIn() async {
+    setState(() {
+      _isCheckingIn = true;
+    });
+    try {
+      await _bookingRepository.checkIn(widget.bookingId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Check-in thành công!')),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi check-in: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCheckingIn = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _confirmAndDeleteBooking() async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: const Text(
+          'Bạn có chắc muốn xóa đặt phòng này không? Hành động này không thể hoàn tác.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: colorScheme.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      await _bookingRepository.deleteBooking(widget.bookingId);
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi xóa: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    }
   }
 
   String _formatDateTime(DateTime? dt) {
@@ -223,31 +298,49 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Row 1: Check in – full width
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: handle check-in
-                    },
-                    icon: const Icon(Icons.login),
-                    label: const Text('Check in'),
+                if (booking.status == BookingStatus.confirmed)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isCheckingIn || _isDeleting ? null : _handleCheckIn,
+                        icon: _isCheckingIn
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.login),
+                        label: Text(_isCheckingIn ? 'Đang check in...' : 'Check in'),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
                 // Row 2: Xóa | Cập nhật
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          // TODO: handle delete
-                        },
-                        icon: Icon(
-                          Icons.delete_outline,
-                          color: colorScheme.error,
-                        ),
+                        onPressed: _isDeleting || _isCheckingIn
+                            ? null
+                            : _confirmAndDeleteBooking,
+                        icon: _isDeleting
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colorScheme.error,
+                                ),
+                              )
+                            : Icon(
+                                Icons.delete_outline,
+                                color: colorScheme.error,
+                              ),
                         label: Text(
-                          'Xóa',
+                          _isDeleting ? 'Đang xóa...' : 'Xóa',
                           style: TextStyle(color: colorScheme.error),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -258,9 +351,11 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: () {
-                          // TODO: handle update
-                        },
+                        onPressed: _isCheckingIn || _isDeleting
+                            ? null
+                            : () {
+                                // TODO: handle update
+                              },
                         icon: const Icon(Icons.save_outlined),
                         label: const Text('Cập nhật'),
                       ),
