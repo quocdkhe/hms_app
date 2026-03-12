@@ -22,6 +22,7 @@ class BookingDetails extends BookingScheduleItem {
 
   BookingDetails({
     required super.id,
+    required super.roomId,
     required super.customerAvatar,
     required super.customerName,
     required super.checkInDateTime,
@@ -39,6 +40,7 @@ class BookingDetails extends BookingScheduleItem {
   ) {
     return BookingDetails(
       id: booking['id'] as int,
+      roomId: booking['room_id'] as int,
       customerAvatar: booking['user_profiles']['avatar_url'] as String?,
       customerName: booking['user_profiles']['full_name'] as String,
       customerPhone: booking['user_profiles']['phone'] as String,

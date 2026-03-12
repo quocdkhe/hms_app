@@ -69,6 +69,7 @@ class RoomRepository {
         .from('bookings')
         .select('''
           id,
+          room_id,
           user_profiles(full_name, avatar_url, phone),
           check_in_date_time,
           check_out_date_time,

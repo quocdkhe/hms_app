@@ -4,6 +4,7 @@ import 'package:hms_app/models/enums/booking_status.dart';
 
 class BookingScheduleItem {
   final int id;
+  final int roomId;
   final String? customerAvatar;
   final String customerName;
   final String customerPhone;
@@ -15,6 +16,7 @@ class BookingScheduleItem {
 
   BookingScheduleItem({
     required this.id,
+    required this.roomId,
     required this.customerAvatar,
     required this.customerName,
     required this.customerPhone,
@@ -28,6 +30,7 @@ class BookingScheduleItem {
   factory BookingScheduleItem.fromJson(Map<String, dynamic> json) {
     return BookingScheduleItem(
       id: json['id'] as int,
+      roomId: json['room_id'] as int,
       customerAvatar: json['user_profiles']['avatar_url'] as String?,
       customerName: json['user_profiles']['full_name'] as String,
       customerPhone: json['user_profiles']['phone'] as String,

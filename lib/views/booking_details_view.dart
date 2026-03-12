@@ -57,12 +57,12 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     });
   }
 
-  Future<void> _handleCheckIn() async {
+  Future<void> _handleCheckIn(int roomId) async {
     setState(() {
       _isCheckingIn = true;
     });
     try {
-      await _bookingRepository.checkIn(widget.bookingId);
+      await _bookingRepository.checkIn(widget.bookingId, roomId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Check-in thành công!')),
@@ -304,7 +304,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _isCheckingIn || _isDeleting ? null : _handleCheckIn,
+                        onPressed: _isCheckingIn || _isDeleting
+                            ? null
+                            : () => _handleCheckIn(booking.roomId),
                         icon: _isCheckingIn
                             ? const SizedBox(
                                 width: 16,
@@ -314,7 +316,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                 ),
                               )
                             : const Icon(Icons.login),
-                        label: Text(_isCheckingIn ? 'Đang check in...' : 'Check in'),
+                        label: Text(
+                            _isCheckingIn ? 'Đang check in...' : 'Check in'),
                       ),
                     ),
                   ),

@@ -87,6 +87,7 @@ class BookingRepository {
         .from('bookings')
         .select('''
           id,
+          room_id,
           user_profiles(full_name, avatar_url, phone),
           check_in_date_time,
           check_out_date_time,
@@ -104,6 +105,7 @@ class BookingRepository {
         .from('bookings')
         .select('''
           id,
+          room_id,
           user_profiles(full_name, avatar_url, phone),
           check_in_date_time,
           check_out_date_time,
@@ -138,7 +140,10 @@ class BookingRepository {
     await _supabase.from('bookings').delete().eq('id', bookingId);
   }
 
-  Future<void> checkIn(int bookingId) async {
+  Future<void> checkIn(int bookingId, int roomId) async {
+    if(!await _isRoomUsingNow(roomId: roomId)){
+      throw Exception('Phòng chưa được checkout!');
+    }
     await _supabase
         .from('bookings')
         .update({
@@ -148,6 +153,14 @@ class BookingRepository {
         .eq('id', bookingId);
   }
 
+  Future<void> updateBooking({
+    required int bookingId,
+    required DateTime checkInDateTime,
+    required DateTime checkOutDateTime
+  }) async {
+
+  }
+
   /// --------------------------------------------------------------------
   /// Helper functions check room is ok to book in this time
 
@@ -155,20 +168,27 @@ class BookingRepository {
     required int roomId,
     required DateTime checkInDateTime,
     required DateTime checkOutDateTime,
+    int? bookingId,
   }) async {
     // Ensure we always send UTC to Postgres, regardless of local timezone
     final checkInUtc = checkInDateTime.toUtc();
     final checkOutUtc = checkOutDateTime.toUtc();
 
-    final response = await _supabase
+    var query = _supabase
         .from('bookings')
         .select()
         .eq('room_id', roomId)
         .neq('status', 'no_show')
         .or(
-          'actual_check_out_date_time.is.null,actual_check_out_date_time.gt.${checkInUtc.toIso8601String()}',
-        )
+      'actual_check_out_date_time.is.null,actual_check_out_date_time.gt.${checkInUtc.toIso8601String()}',
+    )
         .lt('check_in_date_time', checkOutUtc.toIso8601String());
+
+    if (bookingId != null) {
+      query = query.neq('id', bookingId);
+    }
+
+    final response = await query;
 
     final overlapping = (response as List).where((booking) {
       final actualCheckOut = booking['actual_check_out_date_time'];
