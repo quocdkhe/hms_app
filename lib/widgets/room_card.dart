@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/models/dtos/room_card_item.dart';
-import 'package:hms_app/views/room_details.dart';
+import 'package:hms_app/views/room_details_view.dart';
 
 class RoomCard extends StatelessWidget {
   final RoomCardItem room;
