@@ -44,7 +44,7 @@ class _CheckOutViewState extends State<CheckOutView> {
             subtitle:
                 '${formatVND(u.service.pricePerUnit)} đ x ${u.quantity} ${u.service.unit}',
             price: u.quantity * u.service.pricePerUnit,
-            isService: true,
+            type: BillingItemType.service,
           ),
         )
         .toList();
