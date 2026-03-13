@@ -65,16 +65,16 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     try {
       await _bookingRepository.checkIn(widget.bookingId, roomId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Check-in thành công!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Check-in thành công!')));
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi check-in: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi check-in: $e')));
       }
     } finally {
       if (mounted) {
@@ -104,9 +104,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi cập nhật: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi cập nhật: $e')));
       }
     } finally {
       if (mounted) {
@@ -350,7 +350,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                               )
                             : const Icon(Icons.login),
                         label: Text(
-                            _isCheckingIn ? 'Đang check in...' : 'Check in'),
+                          _isCheckingIn ? 'Đang check in...' : 'Check in',
+                        ),
                       ),
                     ),
                   ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:hms_app/models/dtos/billing_item.dart';
 import 'package:hms_app/models/dtos/booking_details.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
 import 'package:hms_app/repositories/room_repository.dart';
+import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/widgets/time_row.dart';
 
 class CheckOutView extends StatefulWidget {
@@ -25,10 +27,27 @@ class _CheckOutViewState extends State<CheckOutView> {
   final _roomRepository = RoomRepository();
   late Future<_CheckoutData> _dataFuture;
 
+  List<BillingItem> _billingItems = [];
+
   @override
   void initState() {
     super.initState();
     _dataFuture = _fetchData();
+  }
+
+  void _initBillingItems(BookingDetails booking) {
+    _billingItems = booking.usedServices
+        .where((u) => u.quantity > 0)
+        .map(
+          (u) => BillingItem(
+            title: u.service.name,
+            subtitle:
+                '${formatVND(u.service.pricePerUnit)} đ x ${u.quantity} ${u.service.unit}',
+            price: u.quantity * u.service.pricePerUnit,
+            isService: true,
+          ),
+        )
+        .toList();
   }
 
   Future<_CheckoutData> _fetchData() async {
@@ -36,6 +55,8 @@ class _CheckOutViewState extends State<CheckOutView> {
       widget.bookingId,
     );
     final room = await _roomRepository.getRoomDetails(booking.roomId);
+    // Initialise billing items from fetched booking data
+    if (mounted) setState(() => _initBillingItems(booking));
     return _CheckoutData(booking: booking, room: room);
   }
 
@@ -184,9 +205,84 @@ class _CheckOutViewState extends State<CheckOutView> {
                   ),
                 ),
               ),
+
+              const Divider(height: 32),
+
+              // ── Billing Summary ───────────────────────────────────────────
+              Text(
+                'Chi tiết thanh toán',
+                style: textTheme.labelLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              Card(
+                child: _billingItems.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: Text('Không có dịch vụ nào')),
+                      )
+                    : Column(
+                        children: [
+                          for (int i = 0; i < _billingItems.length; i++) ...[
+                            ListTile(
+                              title: Text(
+                                _billingItems[i].title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(_billingItems[i].subtitle),
+                              trailing: Text(
+                                '${formatVND(_billingItems[i].price)} đ',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            if (i < _billingItems.length - 1)
+                              const Divider(height: 1),
+                          ],
+                        ],
+                      ),
+              ),
             ],
           );
         },
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Tổng cộng',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '${formatVND(_billingItems.fold(0, (sum, item) => sum + item.price))} đ',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            FilledButton(
+              onPressed: () {},
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+              child: const Text('Thanh toán'),
+            ),
+          ],
+        ),
       ),
     );
   }
