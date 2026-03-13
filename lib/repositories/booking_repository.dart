@@ -141,7 +141,7 @@ class BookingRepository {
   }
 
   Future<void> checkIn(int bookingId, int roomId) async {
-    if(!await _isRoomUsingNow(roomId: roomId)){
+    if(await _isRoomUsingNow(roomId: roomId)){
       throw Exception('Phòng chưa được checkout!');
     }
     await _supabase
@@ -154,11 +154,25 @@ class BookingRepository {
   }
 
   Future<void> updateBooking({
+    required int roomId,
     required int bookingId,
     required DateTime checkInDateTime,
     required DateTime checkOutDateTime
   }) async {
-
+    if(!await _isBookingOverlap(
+      roomId: roomId,
+      checkInDateTime: checkInDateTime,
+      checkOutDateTime: checkOutDateTime,
+      bookingId: bookingId
+    )){
+      throw Exception("Phòng đã được đặt trong thời gian này!");
+    }
+    await _supabase
+          .from("bookings")
+          .update({
+          "check_in_date_time": checkInDateTime.toUtc().toIso8601String(),
+          "check_out_date_time": checkOutDateTime.toUtc().toIso8601String(),
+    }).eq('id', bookingId);
   }
 
   /// --------------------------------------------------------------------

@@ -195,7 +195,7 @@ class _StayManagementState extends State<StayManagement> {
               ),
               const SizedBox(height: 12),
               DateTimePicker(
-                label: 'Gia hạn thời gian ở',
+                label: 'Chỉnh sửa thời gian ở',
                 icon: Icons.schedule_outlined,
                 value: _formatDt(_checkoutDateTime!),
                 onTap: _pickCheckout,

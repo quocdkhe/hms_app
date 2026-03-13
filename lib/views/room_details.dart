@@ -302,11 +302,21 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 Icons.arrow_forward_ios,
                                 size: 14,
                               ),
-                              onTap: () {
-                                Navigator.pushNamed(
+                              onTap: () async {
+                                final result = await Navigator.pushNamed(
                                   context,
                                   '/booking-details/${s.id}',
                                 );
+                                if (result == true && mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Đặt phòng thành công!')),
+                                  );
+                                  setState(() {
+                                    _bookingScheduleFuture = _roomRepository.getBookingSchedule(
+                                      widget.roomId,
+                                    );
+                                  });
+                                }
                               },
                             ),
                           ),
@@ -332,9 +342,6 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     const SnackBar(content: Text('Đặt phòng thành công!')),
                   );
                   setState(() {
-                    // _roomDetailsFuture = _roomRepository.getRoomDetails(
-                    //   widget.roomId,
-                    // );
                     _bookingScheduleFuture = _roomRepository.getBookingSchedule(
                       widget.roomId,
                     );

@@ -20,6 +20,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   DateTime? _checkOut;
   bool _isDeleting = false;
   bool _isCheckingIn = false;
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -79,6 +80,41 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       if (mounted) {
         setState(() {
           _isCheckingIn = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleUpdate(int roomId) async {
+    if (_checkIn == null || _checkOut == null) return;
+
+    setState(() {
+      _isUpdating = true;
+    });
+
+    try {
+      await _bookingRepository.updateBooking(
+        roomId: roomId,
+        bookingId: widget.bookingId,
+        checkInDateTime: _checkIn!,
+        checkOutDateTime: _checkOut!,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật thành công!')),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi cập nhật: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdating = false;
         });
       }
     }
@@ -304,7 +340,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _isCheckingIn || _isDeleting
+                        onPressed: _isCheckingIn || _isDeleting || _isUpdating
                             ? null
                             : () => _handleCheckIn(booking.roomId),
                         icon: _isCheckingIn
@@ -326,7 +362,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _isDeleting || _isCheckingIn
+                        onPressed: _isDeleting || _isCheckingIn || _isUpdating
                             ? null
                             : _confirmAndDeleteBooking,
                         icon: _isDeleting
@@ -354,13 +390,20 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: _isCheckingIn || _isDeleting
+                        onPressed: _isCheckingIn || _isDeleting || _isUpdating
                             ? null
-                            : () {
-                                // TODO: handle update
-                              },
-                        icon: const Icon(Icons.save_outlined),
-                        label: const Text('Cập nhật'),
+                            : () => _handleUpdate(booking.roomId),
+                        icon: _isUpdating
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.save_outlined),
+                        label: Text(_isUpdating ? 'Đang lưu...' : 'Cập nhật'),
                       ),
                     ),
                   ],
