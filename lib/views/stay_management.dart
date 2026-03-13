@@ -4,6 +4,7 @@ import 'package:hms_app/models/dtos/service_usage.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
 import 'package:hms_app/repositories/service_repository.dart';
 import 'package:hms_app/utils/format_vnd.dart';
+import 'package:hms_app/views/check_out_view.dart';
 import 'package:hms_app/widgets/date_time_picker.dart';
 import 'package:hms_app/widgets/service_card.dart';
 import 'package:hms_app/widgets/time_row.dart';
@@ -291,7 +292,7 @@ class _StayManagementState extends State<StayManagement> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Handle check-out
+                      Navigator.pushNamed(context, '/check-out/${details.id}');
                     },
                     child: const Text('Check out'),
                   ),
