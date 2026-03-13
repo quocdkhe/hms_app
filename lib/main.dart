@@ -62,7 +62,7 @@ class HMSApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      initialRoute: '/login',
+      initialRoute: '/login', // login
       routes: {
         '/login': (context) => const LoginView(),
         '/room-map': (context) => const RoomMapView(),

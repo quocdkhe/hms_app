@@ -94,7 +94,7 @@ class _StayManagementState extends State<StayManagement> {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // ── Customer Card ──────────────────────────────────────────
+              // Customer Card 
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
