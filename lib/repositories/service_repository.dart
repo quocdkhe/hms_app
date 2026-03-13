@@ -1,3 +1,4 @@
+import 'package:hms_app/models/dtos/service_usage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hms_app/models/service.dart';
 
@@ -66,5 +67,31 @@ class ServiceRepository {
           'status': status,
         })
         .eq('id', id);
+  }
+
+  Future<void> updateServiceUsage(
+    int bookingId,
+    List<ServiceUsage> serviceUsages,
+  ) async {
+    //delete old first
+    await _supabase.from('service_usage').delete().eq('booking_id', bookingId);
+
+    // insert new
+    final usagesToInsert = serviceUsages.where((e) => e.quantity > 0).toList();
+    if (usagesToInsert.isEmpty) return;
+
+    await _supabase
+        .from('service_usage')
+        .insert(
+          usagesToInsert
+              .map(
+                (e) => {
+                  'booking_id': bookingId,
+                  'service_id': e.service.id,
+                  'quantity': e.quantity,
+                },
+              )
+              .toList(),
+        );
   }
 }

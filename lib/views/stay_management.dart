@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/models/dtos/booking_details.dart';
+import 'package:hms_app/models/dtos/service_usage.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
+import 'package:hms_app/repositories/service_repository.dart';
 import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/widgets/date_time_picker.dart';
 import 'package:hms_app/widgets/service_card.dart';
@@ -18,7 +20,10 @@ class StayManagement extends StatefulWidget {
 class _StayManagementState extends State<StayManagement> {
   late Future<BookingDetails> _detailsFuture;
   final _bookingRepository = BookingRepository();
+  final _serviceRepository = ServiceRepository();
   DateTime? _checkoutDateTime;
+  List<ServiceUsage>? _currentUsages;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -28,11 +33,15 @@ class _StayManagementState extends State<StayManagement> {
 
   Future<void> _pickCheckout() async {
     final current = _checkoutDateTime!;
+    final now = DateTime.now();
+    // Prevent initialDate being before firstDate (now)
+    final initialDate = current.isBefore(now) ? now : current;
+
     final date = await showDatePicker(
       context: context,
-      initialDate: current,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: initialDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
     );
     if (date == null || !mounted) return;
     final time = await showTimePicker(
@@ -58,6 +67,39 @@ class _StayManagementState extends State<StayManagement> {
     final h = l.hour.toString().padLeft(2, '0');
     final min = l.minute.toString().padLeft(2, '0');
     return '$d/$m/${l.year} $h:$min';
+  }
+
+  Future<void> _saveChanges(BookingDetails details) async {
+    setState(() => _isSaving = true);
+    try {
+      await _serviceRepository.updateServiceUsage(
+        widget.bookingId,
+        _currentUsages!,
+      );
+
+      await _bookingRepository.updateBooking(
+        roomId: details.roomId,
+        bookingId: widget.bookingId,
+        checkInDateTime:
+            details.actualCheckInDateTime ?? details.checkInDateTime,
+        checkOutDateTime: _checkoutDateTime!,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Lưu thay đổi thành công')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 
   @override
@@ -86,6 +128,7 @@ class _StayManagementState extends State<StayManagement> {
         final details = snapshot.data!;
         _checkoutDateTime ??=
             details.actualCheckOutDateTime ?? details.checkoutDateTime;
+        _currentUsages ??= List.from(details.usedServices);
         final colorScheme = Theme.of(context).colorScheme;
         final textTheme = Theme.of(context).textTheme;
 
@@ -208,25 +251,52 @@ class _StayManagementState extends State<StayManagement> {
                 ),
               ),
               const SizedBox(height: 12),
-              ...details.usedServices.map(
-                (usage) => ServiceCard(
+              ..._currentUsages!.asMap().entries.map((entry) {
+                final index = entry.key;
+                final usage = entry.value;
+                return ServiceCard(
                   imageUrl: usage.service.imageUrl ?? '',
                   title: usage.service.name,
                   subtitle:
                       '${formatVND(usage.service.pricePerUnit)} VND / ${usage.service.unit}',
                   unit: usage.service.unit,
                   initialQuantity: usage.quantity,
-                ),
-              ),
+                  onChanged: (newQty) {
+                    _currentUsages![index] = ServiceUsage(
+                      service: usage.service,
+                      quantity: newQty,
+                    );
+                  },
+                );
+              }),
             ],
           ),
           bottomNavigationBar: Container(
             padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              onPressed: () {
-                // TODO: Handle check-out
-              },
-              child: const Text('Thanh toán'),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isSaving ? null : () => _saveChanges(details),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Lưu thay đổi'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // TODO: Handle check-out
+                    },
+                    child: const Text('Check out'),
+                  ),
+                ),
+              ],
             ),
           ),
         );

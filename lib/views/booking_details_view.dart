@@ -100,9 +100,6 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         checkOutDateTime: _checkOut!,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cập nhật thành công!')),
-        );
         Navigator.pop(context, true);
       }
     } catch (e) {

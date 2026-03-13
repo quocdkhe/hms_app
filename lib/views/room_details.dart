@@ -198,15 +198,24 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // ── Khách đang ở ───────────────────────────────────────
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
+                          const Text(
                             'Khách đang ở',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.refresh),
+                            onPressed: () {
+                              setState(() {
+                                _bookingScheduleFuture = _roomRepository
+                                    .getBookingSchedule(widget.roomId);
+                              });
+                            },
                           ),
                         ],
                       ),
@@ -244,12 +253,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                               );
                               if (result == true && mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Thao tác thành công!')),
+                                  const SnackBar(
+                                    content: Text('Thao tác thành công!'),
+                                  ),
                                 );
                                 setState(() {
-                                  _bookingScheduleFuture = _roomRepository.getBookingSchedule(
-                                    widget.roomId,
-                                  );
+                                  _bookingScheduleFuture = _roomRepository
+                                      .getBookingSchedule(widget.roomId);
                                 });
                               }
                             },
@@ -309,12 +319,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                 );
                                 if (result == true && mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Đặt phòng thành công!')),
+                                    const SnackBar(
+                                      content: Text('Thao tác thành công!'),
+                                    ),
                                   );
                                   setState(() {
-                                    _bookingScheduleFuture = _roomRepository.getBookingSchedule(
-                                      widget.roomId,
-                                    );
+                                    _bookingScheduleFuture = _roomRepository
+                                        .getBookingSchedule(widget.roomId);
                                   });
                                 }
                               },

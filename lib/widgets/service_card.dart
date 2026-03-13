@@ -6,6 +6,7 @@ class ServiceCard extends StatefulWidget {
   final String subtitle;
   final String unit;
   final int initialQuantity;
+  final ValueChanged<int>? onChanged;
 
   const ServiceCard({
     super.key,
@@ -14,6 +15,7 @@ class ServiceCard extends StatefulWidget {
     required this.subtitle,
     required this.unit,
     this.initialQuantity = 0,
+    this.onChanged,
   });
 
   @override
@@ -66,7 +68,12 @@ class _ServiceCardState extends State<ServiceCard> {
               ),
             ),
             IconButton.outlined(
-              onPressed: _qty > 0 ? () => setState(() => _qty--) : null,
+              onPressed: _qty > 0
+                  ? () {
+                      setState(() => _qty--);
+                      widget.onChanged?.call(_qty);
+                    }
+                  : null,
               icon: const Icon(Icons.remove, size: 16),
               style: IconButton.styleFrom(
                 minimumSize: const Size(32, 32),
@@ -89,7 +96,10 @@ class _ServiceCardState extends State<ServiceCard> {
               ),
             ),
             IconButton.outlined(
-              onPressed: () => setState(() => _qty++),
+              onPressed: () {
+                setState(() => _qty++);
+                widget.onChanged?.call(_qty);
+              },
               icon: const Icon(Icons.add, size: 16),
               style: IconButton.styleFrom(
                 minimumSize: const Size(32, 32),
