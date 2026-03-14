@@ -175,36 +175,73 @@ class _CheckOutViewState extends State<CheckOutView> {
                         ),
                       ),
                       const SizedBox(height: 12),
+                      // Row 1: Scheduled check-in
                       buildTimeRow(
                         context,
                         icon: Icons.login_outlined,
-                        label: 'Check-in',
+                        label: 'Check-in (chuẩn)',
+                        dateTime: booking.checkInDateTime,
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 8,
+                        ),
+                        child: SizedBox(
+                          height: 16,
+                          child: VerticalDivider(width: 1, thickness: 1),
+                        ),
+                      ),
+                      // Row 2: Actual check-in
+                      buildTimeRow(
+                        context,
+                        icon: Icons.login,
+                        label: 'Check-in (thực tế)',
                         dateTime:
                             booking.actualCheckInDateTime ??
                             booking.checkInDateTime,
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(
-                          vertical: 8,
+                          vertical: 4,
                           horizontal: 8,
                         ),
                         child: SizedBox(
-                          height: 24,
+                          height: 16,
                           child: VerticalDivider(width: 1, thickness: 1),
                         ),
                       ),
+                      // Row 3: Scheduled check-out
                       buildTimeRow(
                         context,
                         icon: Icons.logout_outlined,
                         label: 'Check-out (dự kiến)',
+                        dateTime: booking.checkoutDateTime,
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 8,
+                        ),
+                        child: SizedBox(
+                          height: 16,
+                          child: VerticalDivider(width: 1, thickness: 1),
+                        ),
+                      ),
+                      // Row 4: Actual check-out (DateTime.now() as placeholder when null)
+                      buildTimeRow(
+                        context,
+                        icon: Icons.logout,
+                        label: 'Check-out (thực tế)',
                         dateTime:
-                            booking.actualCheckOutDateTime ??
-                            booking.checkoutDateTime,
+                            booking.actualCheckOutDateTime ?? DateTime.now(),
                       ),
                     ],
                   ),
                 ),
               ),
+
+              const SizedBox(height: 12),
 
               const Divider(height: 32),
 
@@ -217,6 +254,14 @@ class _CheckOutViewState extends State<CheckOutView> {
               ),
               const SizedBox(height: 8),
 
+              // ── Services sub-section ─────────────────────────────────────
+              Text(
+                'Dịch vụ',
+                style: textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
               Card(
                 child: _billingItems.isEmpty
                     ? const Padding(
@@ -247,6 +292,37 @@ class _CheckOutViewState extends State<CheckOutView> {
                           ],
                         ],
                       ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // ── Room Fee sub-section ──────────────────────────────────────
+              Text(
+                'Tiền phòng',
+                style: textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: Text(
+                        'Phòng ${room.roomName}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: const Text('Tiền phòng cơ bản'),
+                      trailing: Text(
+                        '${formatVND(500000)} đ',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           );

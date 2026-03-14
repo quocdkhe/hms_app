@@ -68,10 +68,17 @@ class BookingRepository {
     }
 
     // Step 2: Create booking
+    final checkInDate = DateTime(
+      checkInDateTime.year,
+      checkInDateTime.month,
+      checkInDateTime.day,
+      14,
+      0,
+    );
     await _supabase.from('bookings').insert({
       'room_id': roomId,
       'user_id': userId,
-      'check_in_date_time': checkInDateTime.toUtc().toIso8601String(),
+      'check_in_date_time': checkInDate.toUtc().toIso8601String(),
       'actual_check_in_date_time': checkInNow
           ? checkInDateTime.toUtc().toIso8601String()
           : null,
@@ -141,7 +148,7 @@ class BookingRepository {
   }
 
   Future<void> checkIn(int bookingId, int roomId) async {
-    if(await _isRoomUsingNow(roomId: roomId)){
+    if (await _isRoomUsingNow(roomId: roomId)) {
       throw Exception('Phòng chưa được checkout!');
     }
     await _supabase
@@ -157,22 +164,23 @@ class BookingRepository {
     required int roomId,
     required int bookingId,
     required DateTime checkInDateTime,
-    required DateTime checkOutDateTime
+    required DateTime checkOutDateTime,
   }) async {
-    if(!await _isBookingOverlap(
+    if (!await _isBookingOverlap(
       roomId: roomId,
       checkInDateTime: checkInDateTime,
       checkOutDateTime: checkOutDateTime,
-      bookingId: bookingId
-    )){
+      bookingId: bookingId,
+    )) {
       throw Exception("Phòng đã được đặt trong thời gian này!");
     }
     await _supabase
-          .from("bookings")
-          .update({
+        .from("bookings")
+        .update({
           "check_in_date_time": checkInDateTime.toUtc().toIso8601String(),
           "check_out_date_time": checkOutDateTime.toUtc().toIso8601String(),
-    }).eq('id', bookingId);
+        })
+        .eq('id', bookingId);
   }
 
   /// --------------------------------------------------------------------
@@ -194,8 +202,8 @@ class BookingRepository {
         .eq('room_id', roomId)
         .neq('status', 'no_show')
         .or(
-      'actual_check_out_date_time.is.null,actual_check_out_date_time.gt.${checkInUtc.toIso8601String()}',
-    )
+          'actual_check_out_date_time.is.null,actual_check_out_date_time.gt.${checkInUtc.toIso8601String()}',
+        )
         .lt('check_in_date_time', checkOutUtc.toIso8601String());
 
     if (bookingId != null) {

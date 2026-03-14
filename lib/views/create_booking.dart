@@ -4,6 +4,7 @@ import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
 import 'package:hms_app/repositories/room_repository.dart';
 import 'package:hms_app/repositories/user_repository.dart';
+import 'package:hms_app/utils/date_diff.dart';
 import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/widgets/date_time_picker.dart';
 
@@ -55,19 +56,9 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
     );
     if (date == null) return;
 
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (time == null) return;
+    final hour = isCheckIn ? 14 : 12;
 
-    final result = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
+    final result = DateTime(date.year, date.month, date.day, hour, 0);
 
     setState(() {
       if (isCheckIn) {
@@ -111,7 +102,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
       return;
     }
 
-    if (_checkOut!.difference(_checkIn!).inDays < 1) {
+    if (dateDiffAtLeastOne(_checkIn!, _checkOut!)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -463,7 +454,9 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
                     onChanged: (val) {
                       setState(() {
                         _checkInNow = val ?? false;
-                        if (_checkInNow) _checkIn = DateTime.now();
+                        if (_checkInNow) {
+                          _checkIn = DateTime.now();
+                        }
                       });
                     },
                   ),
