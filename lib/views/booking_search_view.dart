@@ -72,17 +72,22 @@ class _BookingSearchViewState extends State<BookingSearchView> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Nhập số điện thoại',
+                prefixIcon: const Icon(Icons.search),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
-                  borderSide: const BorderSide(),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
-                  borderSide: const BorderSide(),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ),
               keyboardType: TextInputType.phone,
