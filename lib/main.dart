@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/providers/color_provider.dart';
+import 'package:hms_app/views/bill_details_view.dart';
 import 'package:hms_app/views/booking_details_view.dart';
 import 'package:hms_app/views/check_out_view.dart';
 import 'package:hms_app/views/create_booking.dart';
@@ -147,12 +148,23 @@ class HMSApp extends StatelessWidget {
           }
         }
 
+        // Match: /bill-details/:id
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'bill-details') {
+          final bookingId = int.tryParse(uri.pathSegments[1]);
+          if (bookingId != null) {
+            return MaterialPageRoute(
+              builder: (context) => BillDetailsView(bookingId: bookingId),
+            );
+          }
+        }
+
         // Match: /payment/:totalAmount
         if (uri.pathSegments.length == 2 &&
             uri.pathSegments.first == 'payment') {
           final totalAmount = int.tryParse(uri.pathSegments[1]);
           if (totalAmount != null) {
-            return MaterialPageRoute(
+            return MaterialPageRoute<bool>(
               builder: (context) => PaymentView(totalAmount: totalAmount),
             );
           }

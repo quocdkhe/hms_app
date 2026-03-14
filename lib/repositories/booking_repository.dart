@@ -107,7 +107,7 @@ class BookingRepository {
     return BookingScheduleItem.fromJson(response);
   }
 
-  Future<BookingDetails> getCurrentStayDetails(int bookingId) async {
+  Future<BookingDetails> getBookingDetailsWithServices(int bookingId) async {
     final booking = await _supabase
         .from('bookings')
         .select('''

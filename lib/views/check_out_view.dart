@@ -4,6 +4,7 @@ import 'package:hms_app/models/dtos/booking_details.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/models/fee.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
+import 'package:hms_app/repositories/fee_repository.dart';
 import 'package:hms_app/repositories/room_repository.dart';
 import 'package:hms_app/utils/calculate_room_price.dart';
 import 'package:hms_app/utils/format_vnd.dart';
@@ -27,6 +28,7 @@ class _CheckoutData {
 class _CheckOutViewState extends State<CheckOutView> {
   final _bookingRepository = BookingRepository();
   final _roomRepository = RoomRepository();
+  final _feeRepository = FeeRepository();
   late Future<_CheckoutData> _dataFuture;
 
   List<BillingItem> _billingItems = [];
@@ -88,7 +90,7 @@ class _CheckOutViewState extends State<CheckOutView> {
   }
 
   Future<_CheckoutData> _fetchData() async {
-    final booking = await _bookingRepository.getCurrentStayDetails(
+    final booking = await _bookingRepository.getBookingDetailsWithServices(
       widget.bookingId,
     );
     final room = await _roomRepository.getRoomDetails(booking.roomId);
@@ -100,6 +102,36 @@ class _CheckOutViewState extends State<CheckOutView> {
       });
     }
     return _CheckoutData(booking: booking, room: room);
+  }
+
+  Future<void> _goToPayment() async {
+    final totalAmount = [
+      ..._billingItems,
+      ..._roomFeeItems,
+      ..._extraItems,
+    ].fold(0, (sum, item) => sum + item.price);
+
+    final confirmed = await Navigator.pushNamed<bool>(
+      context,
+      '/payment/$totalAmount',
+    );
+    if (confirmed != true) return;
+
+    try {
+      final allItems = [..._billingItems, ..._roomFeeItems, ..._extraItems];
+      await _feeRepository.addFees(allItems, widget.bookingId);
+      await _bookingRepository.checkOut(widget.bookingId);
+
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi khi thanh toán: $e')));
+      }
+    }
   }
 
   Future<void> _showAddExtraItemDialog() async {
@@ -555,14 +587,7 @@ class _CheckOutViewState extends State<CheckOutView> {
             ),
             const SizedBox(height: 8),
             FilledButton(
-              onPressed: () {
-                final totalAmount = [
-                  ..._billingItems,
-                  ..._roomFeeItems,
-                  ..._extraItems,
-                ].fold(0, (sum, item) => sum + item.price);
-                Navigator.pushNamed(context, '/payment/$totalAmount');
-              },
+              onPressed: _goToPayment,
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
               ),

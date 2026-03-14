@@ -90,9 +90,7 @@ class _PaymentViewState extends State<PaymentView> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16),
         child: FilledButton(
-          onPressed: () {
-            // TODO: process payment
-          },
+          onPressed: () => Navigator.of(context).pop(true),
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           child: const Text('Xác nhận thanh toán'),
         ),
