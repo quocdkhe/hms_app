@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hms_app/models/dtos/billing_item.dart';
 import 'package:hms_app/models/dtos/booking_details.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
+import 'package:hms_app/models/fee.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
 import 'package:hms_app/repositories/room_repository.dart';
+import 'package:hms_app/utils/calculate_room_price.dart';
 import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/widgets/time_row.dart';
 
@@ -28,6 +30,8 @@ class _CheckOutViewState extends State<CheckOutView> {
   late Future<_CheckoutData> _dataFuture;
 
   List<BillingItem> _billingItems = [];
+  List<BillingItem> _roomFeeItems = [];
+  List<BillingItem> _extraItems = [];
 
   @override
   void initState() {
@@ -44,10 +48,43 @@ class _CheckOutViewState extends State<CheckOutView> {
             subtitle:
                 '${formatVND(u.service.pricePerUnit)} đ x ${u.quantity} ${u.service.unit}',
             price: u.quantity * u.service.pricePerUnit,
-            type: BillingItemType.service,
+            type: FeeType.service,
           ),
         )
         .toList();
+  }
+
+  void _initRoomFeeItems(BookingDetails booking, RoomDetails room) {
+    final breakdown = calculateHotelPrice(
+      checkInDateTime: booking.checkInDateTime,
+      checkOutDateTime: booking.checkoutDateTime,
+      actualCheckInDateTime: booking.actualCheckInDateTime,
+      actualCheckOutDateTime: booking.actualCheckOutDateTime ?? DateTime.now(),
+      pricePerNight: room.pricePerNight,
+    );
+
+    _roomFeeItems = [
+      BillingItem(
+        title: 'Tiền phòng cơ bản',
+        subtitle: '${formatVND(room.pricePerNight)} đ / đêm',
+        price: breakdown.coreRoomFee,
+        type: FeeType.roomFee,
+      ),
+      if (breakdown.extraFeeForCheckIn > 0)
+        BillingItem(
+          title: 'Phụ thu nhận phòng sớm',
+          subtitle: 'Check-in trước 14:00',
+          price: breakdown.extraFeeForCheckIn,
+          type: FeeType.roomFee,
+        ),
+      if (breakdown.extraFeeForCheckOut > 0)
+        BillingItem(
+          title: 'Phụ thu trả phòng muộn',
+          subtitle: 'Check-out sau 12:00',
+          price: breakdown.extraFeeForCheckOut,
+          type: FeeType.roomFee,
+        ),
+    ];
   }
 
   Future<_CheckoutData> _fetchData() async {
@@ -56,8 +93,101 @@ class _CheckOutViewState extends State<CheckOutView> {
     );
     final room = await _roomRepository.getRoomDetails(booking.roomId);
     // Initialise billing items from fetched booking data
-    if (mounted) setState(() => _initBillingItems(booking));
+    if (mounted) {
+      setState(() {
+        _initBillingItems(booking);
+        _initRoomFeeItems(booking, room);
+      });
+    }
     return _CheckoutData(booking: booking, room: room);
+  }
+
+  Future<void> _showAddExtraItemDialog() async {
+    final titleController = TextEditingController();
+    final subtitleController = TextEditingController();
+    final priceController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thêm phí phát sinh'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Tên khoản phí *',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Vui lòng nhập tên'
+                    : null,
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: subtitleController,
+                decoration: const InputDecoration(
+                  labelText: 'Ghi chú (tuỳ chọn)',
+                  border: OutlineInputBorder(),
+                ),
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Số tiền (đ) *',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty)
+                    return 'Vui lòng nhập số tiền';
+                  final parsed = int.tryParse(v.trim().replaceAll(',', ''));
+                  if (parsed == null || parsed <= 0)
+                    return 'Số tiền không hợp lệ';
+                  return null;
+                },
+                textInputAction: TextInputAction.done,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Huỷ'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              final price = int.parse(
+                priceController.text.trim().replaceAll(',', ''),
+              );
+              setState(() {
+                _extraItems.add(
+                  BillingItem(
+                    title: titleController.text.trim(),
+                    subtitle: subtitleController.text.trim().isEmpty
+                        ? 'Phí phát sinh'
+                        : subtitleController.text.trim(),
+                    price: price,
+                    type: FeeType.extraFee,
+                  ),
+                );
+              });
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Thêm'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -246,11 +376,22 @@ class _CheckOutViewState extends State<CheckOutView> {
               const Divider(height: 32),
 
               // ── Billing Summary ───────────────────────────────────────────
-              Text(
-                'Chi tiết thanh toán',
-                style: textTheme.labelLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Chi tiết thanh toán',
+                    style: textTheme.labelLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _showAddExtraItemDialog,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Thêm phí'),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
 
@@ -307,22 +448,85 @@ class _CheckOutViewState extends State<CheckOutView> {
               Card(
                 child: Column(
                   children: [
-                    ListTile(
-                      title: Text(
-                        'Phòng ${room.roomName}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: const Text('Tiền phòng cơ bản'),
-                      trailing: Text(
-                        '${formatVND(500000)} đ',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                    for (int i = 0; i < _roomFeeItems.length; i++) ...[
+                      ListTile(
+                        title: Text(
+                          _roomFeeItems[i].title,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(_roomFeeItems[i].subtitle),
+                        trailing: Text(
+                          '${formatVND(_roomFeeItems[i].price)} đ',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
-                    ),
+                      if (i < _roomFeeItems.length - 1)
+                        const Divider(height: 1),
+                    ],
                   ],
                 ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // ── Extra Fee sub-section ─────────────────────────────────────
+              Text(
+                'Phí phát sinh',
+                style: textTheme.labelMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Card(
+                child: _extraItems.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: Text('Chưa có phí phát sinh')),
+                      )
+                    : Column(
+                        children: [
+                          for (int i = 0; i < _extraItems.length; i++) ...[
+                            ListTile(
+                              title: Text(
+                                _extraItems[i].title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(_extraItems[i].subtitle),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${formatVND(_extraItems[i].price)} đ',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      size: 20,
+                                    ),
+                                    color: Colors.red,
+                                    tooltip: 'Xoá',
+                                    onPressed: () {
+                                      setState(() => _extraItems.removeAt(i));
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (i < _extraItems.length - 1)
+                              const Divider(height: 1),
+                          ],
+                        ],
+                      ),
               ),
             ],
           );
@@ -341,7 +545,7 @@ class _CheckOutViewState extends State<CheckOutView> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  '${formatVND(_billingItems.fold(0, (sum, item) => sum + item.price))} đ',
+                  '${formatVND([..._billingItems, ..._roomFeeItems, ..._extraItems].fold(0, (sum, item) => sum + item.price))} đ',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

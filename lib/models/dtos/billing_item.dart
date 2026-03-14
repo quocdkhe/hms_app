@@ -1,10 +1,10 @@
-enum BillingItemType { roomFee, service, extraFee }
+import 'package:hms_app/models/fee.dart';
 
 class BillingItem {
   final String title;
   final String subtitle;
   final int price;
-  final BillingItemType type;
+  final FeeType type;
 
   BillingItem({
     required this.title,
