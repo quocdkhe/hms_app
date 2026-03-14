@@ -555,7 +555,14 @@ class _CheckOutViewState extends State<CheckOutView> {
             ),
             const SizedBox(height: 8),
             FilledButton(
-              onPressed: () {},
+              onPressed: () {
+                final totalAmount = [
+                  ..._billingItems,
+                  ..._roomFeeItems,
+                  ..._extraItems,
+                ].fold(0, (sum, item) => sum + item.price);
+                Navigator.pushNamed(context, '/payment/$totalAmount');
+              },
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
               ),

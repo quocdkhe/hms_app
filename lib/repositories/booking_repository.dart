@@ -183,6 +183,18 @@ class BookingRepository {
         .eq('id', bookingId);
   }
 
+  Future<void> checkOut(int bookingId) async {
+    await _supabase
+        .from('bookings')
+        .update({
+          'status': BookingStatus.checkedOut.name,
+          'actual_check_out_date_time': DateTime.now()
+              .toUtc()
+              .toIso8601String(),
+        })
+        .eq('id', bookingId);
+  }
+
   /// --------------------------------------------------------------------
   /// Helper functions check room is ok to book in this time
 
