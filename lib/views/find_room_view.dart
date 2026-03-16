@@ -4,6 +4,7 @@ import 'package:hms_app/models/dtos/room_type_option.dart';
 import 'package:hms_app/repositories/room_type_repository.dart';
 import 'package:hms_app/widgets/app_drawer.dart';
 import 'package:hms_app/repositories/room_repository.dart';
+import 'package:hms_app/views/booking_many_view.dart';
 import 'package:hms_app/widgets/date_time_picker.dart';
 
 class FindRoomView extends StatefulWidget {
@@ -21,7 +22,7 @@ class _FindRoomViewState extends State<FindRoomView> {
   bool _isLoading = false;
 
   Set<int> selectedRoomTypeIds = {};
-  int? selectedRoomIndex;
+  Set<int> selectedRoomIndices = {};
   DateTime? checkInDate;
   DateTime? checkOutDate;
   final TextEditingController bedNumberController = TextEditingController();
@@ -119,7 +120,7 @@ class _FindRoomViewState extends State<FindRoomView> {
 
       setState(() {
         _filteredRooms = rooms;
-        selectedRoomIndex = null;
+        selectedRoomIndices.clear();
       });
     } catch (e) {
       if (mounted) {
@@ -275,7 +276,7 @@ class _FindRoomViewState extends State<FindRoomView> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final room = _filteredRooms[index];
-                  final isSelected = selectedRoomIndex == index;
+                  final isSelected = selectedRoomIndices.contains(index);
                   return Card(
                     color: color.surfaceContainer,
                     shape: RoundedRectangleBorder(
@@ -287,7 +288,13 @@ class _FindRoomViewState extends State<FindRoomView> {
                     ),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(8),
-                      onTap: () => setState(() => selectedRoomIndex = index),
+                      onTap: () => setState(() {
+                        if (selectedRoomIndices.contains(index)) {
+                          selectedRoomIndices.remove(index);
+                        } else {
+                          selectedRoomIndices.add(index);
+                        }
+                      }),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Row(
@@ -376,14 +383,32 @@ class _FindRoomViewState extends State<FindRoomView> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: selectedRoomIndex != null ? () {} : null,
+                onPressed: selectedRoomIndices.isNotEmpty
+                    ? () {
+                        final selectedRoomIds = selectedRoomIndices
+                            .map((i) => _filteredRooms[i].id)
+                            .toSet();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CreateBookingManyScreen(
+                              roomIds: selectedRoomIds,
+                            ),
+                          ),
+                        );
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: color.secondary,
                   foregroundColor: color.onSecondary,
                   disabledBackgroundColor: color.surfaceContainerHighest,
                   disabledForegroundColor: color.onSurfaceVariant,
                 ),
-                child: const Text('Đặt Phòng'),
+                child: Text(
+                  selectedRoomIndices.isEmpty
+                      ? 'Đặt Phòng'
+                      : 'Đặt Phòng (${selectedRoomIndices.length})',
+                ),
               ),
             ),
             const SizedBox(height: 40),
