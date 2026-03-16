@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hms_app/models/dtos/RoomSearchResult.dart';
+import 'package:hms_app/models/dtos/room_type_option.dart';
+import 'package:hms_app/repositories/room_type_repository.dart';
 import 'package:hms_app/widgets/app_drawer.dart';
+import 'package:hms_app/repositories/room_repository.dart';
 import 'package:hms_app/widgets/date_time_picker.dart';
 
 class FindRoomView extends StatefulWidget {
@@ -10,24 +14,59 @@ class FindRoomView extends StatefulWidget {
 }
 
 class _FindRoomViewState extends State<FindRoomView> {
-  String selectedRoomType = 'Normal';
+  final RoomRepository _roomRepository = RoomRepository();
+  final RoomTypeRepository _roomTypeRepository = RoomTypeRepository();
+  List<RoomSearchResult> _filteredRooms = [];
+  List<RoomTypeOption> _roomTypes = [];
+  bool _isLoading = false;
+
+  Set<int> selectedRoomTypeIds = {};
   int? selectedRoomIndex;
   DateTime? checkInDate;
   DateTime? checkOutDate;
   final TextEditingController bedNumberController = TextEditingController();
-  final TextEditingController extraBedController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRoomTypes();
+  }
 
   @override
   void dispose() {
     bedNumberController.dispose();
-    extraBedController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadRoomTypes() async {
+    try {
+      final types = await _roomTypeRepository.getRoomTypeOptions();
+      setState(() {
+        _roomTypes = types;
+      });
+    } catch (e) {
+      debugPrint('Error loading room types: $e');
+    }
+  }
+
+  void _toggleRoomType(RoomTypeOption type) {
+    setState(() {
+      if (selectedRoomTypeIds.contains(type.id)) {
+        selectedRoomTypeIds.remove(type.id);
+      } else {
+        selectedRoomTypeIds.add(type.id);
+      }
+    });
+  }
+
   Future<void> _selectDate(BuildContext context, bool isCheckIn) async {
-    final initialDate = isCheckIn ? (checkInDate ?? DateTime.now()) : (checkOutDate ?? checkInDate ?? DateTime.now());
-    final firstDate = isCheckIn ? DateTime.now() : (checkInDate ?? DateTime.now());
-    
+    final initialDate = isCheckIn
+        ? (checkInDate ?? DateTime.now())
+        : (checkOutDate ?? checkInDate ?? DateTime.now());
+    final firstDate = isCheckIn
+        ? DateTime.now()
+        : (checkInDate ?? DateTime.now());
+
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -35,273 +74,331 @@ class _FindRoomViewState extends State<FindRoomView> {
       lastDate: DateTime(2101),
     );
 
-    if (pickedDate != null) {
-      setState(() {
-        if (isCheckIn) {
-          checkInDate = pickedDate;
-          if (checkOutDate != null && checkOutDate!.isBefore(checkInDate!)) {
-            checkOutDate = null;
-          }
-        } else {
-          checkOutDate = pickedDate;
+    if (pickedDate == null) return;
+
+    // Show time picker after date is selected
+    final initialTime = isCheckIn
+        ? (checkInDate != null
+              ? TimeOfDay.fromDateTime(checkInDate!)
+              : TimeOfDay.now())
+        : (checkOutDate != null
+              ? TimeOfDay.fromDateTime(checkOutDate!)
+              : TimeOfDay.now());
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+
+    if (pickedTime == null) return;
+
+    final pickedDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    setState(() {
+      if (isCheckIn) {
+        checkInDate = pickedDateTime;
+        if (checkOutDate != null && checkOutDate!.isBefore(checkInDate!)) {
+          checkOutDate = null;
         }
+      } else {
+        checkOutDate = pickedDateTime;
+      }
+    });
+  }
+
+  Future<void> _searchRooms() async {
+    setState(() => _isLoading = true);
+    try {
+      final bedNumber = int.tryParse(bedNumberController.text);
+
+      // Get selected type names; if none selected, search all
+      final selectedTypeNames = selectedRoomTypeIds.isEmpty
+          ? null
+          : _roomTypes
+                .where((t) => selectedRoomTypeIds.contains(t.id))
+                .map((t) => t.typeName)
+                .toList();
+
+      final rooms = await _roomRepository.searchRooms(
+        numberOfBed: bedNumber,
+        typeNames: selectedTypeNames,
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
+      );
+
+      setState(() {
+        _filteredRooms = rooms;
+        selectedRoomIndex = null;
       });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error finding rooms: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'dd/MM/yyyy HH:mm';
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year} '
+        '${date.hour.toString().padLeft(2, '0')}:'
+        '${date.minute.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final color = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: color.surface,
       appBar: AppBar(
-        title: Text('Tìm Phòng', style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text('Tìm Phòng', style: TextStyle(color: color.onSurface)),
         centerTitle: true,
-        iconTheme: IconThemeData(color: colorScheme.onSurface),
+        backgroundColor: color.surface,
+        iconTheme: IconThemeData(color: color.onSurface),
+        elevation: 0,
       ),
       drawer: const AppDrawer(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Check-in and Check-out
+            // Check-in
             DateTimePicker(
               label: 'Nhận phòng',
               icon: Icons.login,
-              value: checkInDate == null ? 'dd/mm/yyyy' : '${checkInDate!.day.toString().padLeft(2, '0')}/${checkInDate!.month.toString().padLeft(2, '0')}/${checkInDate!.year}',
+              value: _formatDate(checkInDate),
               onTap: () => _selectDate(context, true),
             ),
             const SizedBox(height: 12),
+
+            // Check-out
             DateTimePicker(
               label: 'Trả phòng',
               icon: Icons.logout,
-              value: checkOutDate == null ? 'dd/mm/yyyy' : '${checkOutDate!.day.toString().padLeft(2, '0')}/${checkOutDate!.month.toString().padLeft(2, '0')}/${checkOutDate!.year}',
+              value: _formatDate(checkOutDate),
               onTap: () => _selectDate(context, false),
             ),
-            const SizedBox(height: 24),
-
-            // Bed Number
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Giường chính', style: TextStyle(color: colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w500)),
-                SizedBox(
-                  width: 90,
-                  child: TextField(
-                    controller: bedNumberController,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                      isDense: true,
-                    ),
-                  ),
-                )
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Extra bed
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Giường phụ', style: TextStyle(color: colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w500)),
-                SizedBox(
-                  width: 90,
-                  child: TextField(
-                    controller: extraBedController,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                      isDense: true,
-                    ),
-                  ),
-                )
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Loại Phòng
-            Text('Loại Phòng', style: TextStyle(color: colorScheme.onSurface, fontSize: 14, fontWeight: FontWeight.w500)),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: ['Normal', 'VIP', 'King'].map((type) {
-                final isSelected = selectedRoomType == type;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedRoomType = type;
-                    });
-                  },
-                  child: Container(
-                    width: 90,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: isSelected ? colorScheme.primary : colorScheme.onSurface),
-                      color: isSelected ? colorScheme.primary.withOpacity(0.2) : Colors.transparent,
-                    ),
-                    child: Center(
-                      child: Text(
-                        type,
-                        style: TextStyle(color: isSelected ? colorScheme.primary : colorScheme.onSurface, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 32),
 
-            // Search Button
-            Center(
-              child: SizedBox(
-                width: 140,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  child: const Text('Tìm kiếm'),
+            // Bed number
+            TextField(
+              controller: bedNumberController,
+              keyboardType: TextInputType.number,
+              style: TextStyle(color: color.onSurface),
+              decoration: InputDecoration(
+                labelText: 'Giường chính',
+                labelStyle: TextStyle(color: color.onSurfaceVariant),
+                prefixIcon: Icon(Icons.bed, color: color.primary),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: color.outline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: color.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: color.primary, width: 2),
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Room type multi-select
+            Text(
+              'Loại Phòng',
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: color.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_roomTypes.isEmpty)
+              LinearProgressIndicator(color: color.primary)
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _roomTypes.map((type) {
+                    final isSelected = selectedRoomTypeIds.contains(type.id);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text(type.typeName),
+                        selected: isSelected,
+                        onSelected: (_) => _toggleRoomType(type),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
             const SizedBox(height: 24),
-            Divider(color: colorScheme.onSurface, thickness: 1.5),
+
+            // Search button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isLoading ? null : _searchRooms,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color.primary,
+                  foregroundColor: color.onPrimary,
+                  disabledBackgroundColor: color.surfaceContainerHighest,
+                ),
+                icon: _isLoading
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: color.onPrimary,
+                        ),
+                      )
+                    : const Icon(Icons.search),
+                label: const Text('Tìm kiếm'),
+              ),
+            ),
             const SizedBox(height: 24),
+            Divider(thickness: 1, color: color.outlineVariant),
+            const SizedBox(height: 12),
 
             // Room list
-            ...List.generate(3, (index) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: Card(
-                  clipBehavior: Clip.antiAlias,
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(
-                        color: selectedRoomIndex == index ? colorScheme.primary : Colors.transparent, 
-                        width: 2
+            if (_isLoading)
+              Center(child: CircularProgressIndicator(color: color.primary))
+            else if (_filteredRooms.isEmpty)
+              Center(
+                child: Text(
+                  'Không có phòng nào phù hợp.',
+                  style: TextStyle(color: color.onSurfaceVariant),
+                ),
+              )
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _filteredRooms.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final room = _filteredRooms[index];
+                  final isSelected = selectedRoomIndex == index;
+                  return Card(
+                    color: color.surfaceContainer,
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                        color: isSelected ? color.primary : Colors.transparent,
+                        width: 2,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                         selectedRoomIndex = index;
-                      });
-                    },
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Image section placeholder
-                        Container(
-                          width: 110,
-                          height: 110,
-                          color: index == 0 ? colorScheme.primaryContainer : index == 1 ? colorScheme.secondaryContainer : colorScheme.tertiaryContainer,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CustomPaint(
-                                size: const Size(110, 110),
-                                painter: DiagonalLinePainter(color: colorScheme.onSurface),
-                              ),
-                              Text(
-                                'Room\nimage',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Content section
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => setState(() => selectedRoomIndex = index),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            // Image
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: room.imageUrl != null
+                                  ? Image.network(
+                                      room.imageUrl!,
+                                      width: 90,
+                                      height: 90,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          _imagePlaceholder(color),
+                                    )
+                                  : _imagePlaceholder(color),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        'Phòng ${101 + index} - ${index == 0 ? 'Normal' : index == 1 ? 'VIP' : 'King'}',
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
+                            const SizedBox(width: 12),
+                            // Info
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Phòng ${room.roomName}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: color.onSurface,
+                                          ),
                                         ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    if (selectedRoomIndex == index)
-                                      Icon(Icons.check_circle, color: colorScheme.primary),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.bed,
-                                      size: 14,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '2 giường  •  Tầng 1',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
+                                      if (isSelected)
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: color.primary,
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.bed,
+                                        size: 14,
+                                        color: color.onSurfaceVariant,
                                       ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${room.numberOfBed} giường',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: color.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    room.description ?? 'Không có mô tả.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: color.onSurfaceVariant,
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  '500,000 VND/đêm', // formatVND placeholder
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.green,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Mô tả phòng...',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              );
-            }),
+                  );
+                },
+              ),
 
-            // Book Button
-            Center(
-              child: SizedBox(
-                width: 140,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  child: const Text('Đặt Phòng'),
+            const SizedBox(height: 24),
+
+            // Book button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: selectedRoomIndex != null ? () {} : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color.secondary,
+                  foregroundColor: color.onSecondary,
+                  disabledBackgroundColor: color.surfaceContainerHighest,
+                  disabledForegroundColor: color.onSurfaceVariant,
                 ),
+                child: const Text('Đặt Phòng'),
               ),
             ),
             const SizedBox(height: 40),
@@ -310,46 +407,13 @@ class _FindRoomViewState extends State<FindRoomView> {
       ),
     );
   }
-}
 
-class DiagonalLinePainter extends CustomPainter {
-  final Color color;
-
-  DiagonalLinePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.0;
-    canvas.drawLine(const Offset(0, 0), Offset(size.width, size.height), paint);
-    canvas.drawLine(Offset(size.width, 0), Offset(0, size.height), paint);
+  Widget _imagePlaceholder(ColorScheme color) {
+    return Container(
+      width: 90,
+      height: 90,
+      color: color.surfaceContainerHighest,
+      child: Icon(Icons.image_not_supported, color: color.onSurfaceVariant),
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class CheckPainter extends CustomPainter {
-  final Color color;
-
-  CheckPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-    
-    final path = Path();
-    path.moveTo(size.width * 0.15, size.width * 0.5);
-    path.lineTo(size.width * 0.45, size.width * 0.8);
-    path.lineTo(size.width * 0.85, size.width * 0.2);
-    
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
