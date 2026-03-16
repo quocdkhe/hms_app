@@ -4,7 +4,7 @@ import 'package:hms_app/views/bill_details_view.dart';
 import 'package:hms_app/views/booking_details_view.dart';
 import 'package:hms_app/views/check_out_view.dart';
 import 'package:hms_app/views/create_booking.dart';
-import 'package:hms_app/views/find_customer_view.dart';
+import 'package:hms_app/views/booking_search_view.dart';
 import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
 import 'package:hms_app/views/payment_view.dart';
@@ -70,7 +70,7 @@ class HMSApp extends StatelessWidget {
         '/login': (context) => const LoginView(),
         '/room-map': (context) => const RoomMapView(),
         '/find-room': (context) => const FindRoomView(),
-        '/find-customer': (context) => const FindCustomerView(),
+        '/find-customer': (context) => const BookingSearchView(),
         '/settings': (context) => const SettingsView(),
         '/profile': (context) => const MyProfileView(),
         '/room-type-list': (context) => const RoomTypeList(),

@@ -107,6 +107,26 @@ class BookingRepository {
     return BookingScheduleItem.fromJson(response);
   }
 
+  Future<List<BookingScheduleItem>> getAllBookings() async {
+    final response = await _supabase
+        .from('bookings')
+        .select('''
+          id,
+          room_id,
+          user_profiles(full_name, avatar_url, phone),
+          check_in_date_time,
+          check_out_date_time,
+          actual_check_out_date_time,
+          actual_check_in_date_time,
+          status
+        ''')
+        .order('check_in_date_time', ascending: false);
+
+    return (response as List)
+        .map((json) => BookingScheduleItem.fromJson(json))
+        .toList();
+  }
+
   Future<BookingDetails> getBookingDetailsWithServices(int bookingId) async {
     final booking = await _supabase
         .from('bookings')
