@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
+import 'package:hms_app/models/dtos/RoomSearchResult.dart';
 import 'package:hms_app/models/dtos/booking_schedule_item.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/models/room.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:hms_app/models/room_type.dart';
 
 class RoomRepository {
   final _supabase = Supabase.instance.client;
@@ -39,6 +42,72 @@ class RoomRepository {
       throw Exception('Không tìm thấy phòng');
     }
     return Room.fromJson(response);
+  }
+  
+  Future<List<RoomSearchResult>> searchRooms({
+    int? numberOfBed,
+    List<String>? typeNames,
+    DateTime? checkInDate,
+    DateTime? checkOutDate,
+  }) async {
+    // 1. Get conflicting room IDs
+    Set<int> conflictingRoomIds = {};
+    if (checkInDate != null && checkOutDate != null) {
+      final conflictingResponse = await _supabase
+          .from('bookings')
+          .select('room_id')
+          .not('status', 'in', ['checked_out', 'no_show'])
+          .lt('check_in_date_time', checkOutDate.toIso8601String())
+          .gt('check_out_date_time', checkInDate.toIso8601String());
+
+      conflictingRoomIds = (conflictingResponse as List<dynamic>)
+          .map((row) => row['room_id'] as int)
+          .toSet();
+    }
+
+    // 2. Get matching room types
+    var typeQuery = _supabase
+        .from('room_types')
+        .select('id, type_name, number_of_bed, image_url, description');
+
+    if (numberOfBed != null) {
+      typeQuery = typeQuery.eq('number_of_bed', numberOfBed);
+    }
+
+    if (typeNames != null && typeNames.isNotEmpty) {
+      typeQuery = typeQuery.inFilter('type_name', typeNames);
+    }
+
+    final typeResponse = await typeQuery;
+    final roomTypeMap = {
+      for (final t in (typeResponse as List<dynamic>)) t['id'] as int: t,
+    };
+
+    if (roomTypeMap.isEmpty) return [];
+
+    // 3. Query rooms by room_type_id, exclude conflicting
+    var roomQuery = _supabase
+        .from('rooms')
+        .select('id, room_name, room_type_id')
+        .inFilter('room_type_id', roomTypeMap.keys.toList());
+
+    if (conflictingRoomIds.isNotEmpty) {
+      roomQuery = roomQuery.not('id', 'in', conflictingRoomIds.toList());
+    }
+
+    final roomResponse = await roomQuery;
+
+    // 4. Map to RoomSearchResult
+    return (roomResponse as List<dynamic>).map((row) {
+      final roomType = roomTypeMap[row['room_type_id'] as int]!;
+      return RoomSearchResult(
+        id: row['id'],
+        roomName: row['room_name'],
+        numberOfBed: roomType['number_of_bed'],
+        imageUrl: roomType['image_url'],
+        description: roomType['description'],
+      );
+    }).toList();
   }
 
   Future<RoomDetails> getRoomDetails(int id) async {
