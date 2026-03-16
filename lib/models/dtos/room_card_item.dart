@@ -26,25 +26,7 @@ class RoomCardItem {
 
     final isUsing = bookings.any((b) {
       final status = b['status'];
-      final checkIn = b['actual_check_in_date_time'];
-      final checkout = b['check_out_date_time'];
-
-      debugPrint('status: $status');
-      debugPrint('checkIn: $checkIn');
-      debugPrint('checkout: $checkout');
-
-      if (status != 'checked_in' || checkIn == null || checkout == null) {
-        return false;
-      }
-
-      final checkInTime = DateTime.parse(checkIn);
-      final checkoutTime = DateTime.parse(checkout);
-
-      debugPrint('checkInTime: $checkInTime');
-      debugPrint('checkoutTime: $checkoutTime');
-      debugPrint('now: $now');
-
-      return now.isAfter(checkInTime) && now.isBefore(checkoutTime);
+      return status == 'checked_in';
     });
 
     return RoomCardItem(
