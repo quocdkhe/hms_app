@@ -43,57 +43,7 @@ class RoomRepository {
     }
     return Room.fromJson(response);
   }
-
-  // Future<List<RoomSearchResult>> searchRooms({
-  //   int? numberOfBed,
-  //   String? typeName,
-  //   List<String>? typeNames,
-  //   DateTime? checkInDate,
-  //   DateTime? checkOutDate,
-  // }) async {
-  //   debugPrint('Type names: $typeNames');
-
-  //   var query = _supabase
-  //       .from('rooms')
-  //       .select('room_name, room_types(number_of_bed, image_url, description)');
-
-  //   if (numberOfBed != null) {
-  //     query = query.eq('room_types.number_of_bed', numberOfBed);
-  //   }
-
-  //   if (typeNames != null && typeNames.isNotEmpty) {
-  //     query = query.inFilter('type_name', typeNames);
-  //   }
-
-  //   // Exclude rooms with overlapping booking schedules
-  //   // Overlap condition: existing.checkIn < newCheckOut AND existing.checkOut > newCheckIn
-  //   if (checkInDate != null && checkOutDate != null) {
-  //     final conflictingResponse = await _supabase
-  //         .from('bookings')
-  //         .select('room_id')
-  //         .neq('status', 'checked_out')
-  //         .neq('status', 'no_show')
-  //         .lt('check_in_date_time', checkOutDate.toIso8601String())
-  //         .gt('check_out_date_time', checkInDate.toIso8601String());
-
-  //     final conflictingRoomIds = (conflictingResponse as List<dynamic>)
-  //         .map((row) => row['room_id'] as int)
-  //         .toSet()
-  //         .toList();
-
-  //     if (conflictingRoomIds.isNotEmpty) {
-  //       // Filter out rooms whose id is in the conflicting list
-  //       query = query.not('id', 'in', '(${conflictingRoomIds.join(",")})');
-  //     }
-  //   }
-
-  //   final response = await query;
-  //   return (response as List<dynamic>)
-  //       .where((row) => row['room_types'] != null)
-  //       .map((row) => RoomSearchResult.fromJson(row))
-  //       .toList();
-  // }
-
+  
   Future<List<RoomSearchResult>> searchRooms({
     int? numberOfBed,
     List<String>? typeNames,

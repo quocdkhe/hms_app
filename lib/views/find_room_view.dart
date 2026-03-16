@@ -76,28 +76,13 @@ class _FindRoomViewState extends State<FindRoomView> {
 
     if (pickedDate == null) return;
 
-    // Show time picker after date is selected
-    final initialTime = isCheckIn
-        ? (checkInDate != null
-              ? TimeOfDay.fromDateTime(checkInDate!)
-              : TimeOfDay.now())
-        : (checkOutDate != null
-              ? TimeOfDay.fromDateTime(checkOutDate!)
-              : TimeOfDay.now());
-
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-    );
-
-    if (pickedTime == null) return;
-
+    // Check-in always at 14:00, check-out always at 12:00
     final pickedDateTime = DateTime(
       pickedDate.year,
       pickedDate.month,
       pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
+      isCheckIn ? 14 : 12,
+      0,
     );
 
     setState(() {
@@ -148,7 +133,7 @@ class _FindRoomViewState extends State<FindRoomView> {
   }
 
   String _formatDate(DateTime? date) {
-    if (date == null) return 'dd/MM/yyyy HH:mm';
+    if (date == null) return 'Chọn ngày';
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'
         '${date.year} '
