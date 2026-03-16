@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/providers/color_provider.dart';
+import 'package:hms_app/views/bill_details_view.dart';
 import 'package:hms_app/views/booking_details_view.dart';
 import 'package:hms_app/views/check_out_view.dart';
 import 'package:hms_app/views/create_booking.dart';
 import 'package:hms_app/views/booking_search_view.dart';
 import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
+import 'package:hms_app/views/payment_view.dart';
 import 'package:hms_app/views/room_details_view.dart';
 import 'package:hms_app/views/settings/room/add_room.dart';
 import 'package:hms_app/views/settings/room/room_list.dart';
@@ -142,6 +144,28 @@ class HMSApp extends StatelessWidget {
           if (bookingId != null) {
             return MaterialPageRoute(
               builder: (context) => CheckOutView(bookingId: bookingId),
+            );
+          }
+        }
+
+        // Match: /bill-details/:id
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'bill-details') {
+          final bookingId = int.tryParse(uri.pathSegments[1]);
+          if (bookingId != null) {
+            return MaterialPageRoute(
+              builder: (context) => BillDetailsView(bookingId: bookingId),
+            );
+          }
+        }
+
+        // Match: /payment/:totalAmount
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'payment') {
+          final totalAmount = int.tryParse(uri.pathSegments[1]);
+          if (totalAmount != null) {
+            return MaterialPageRoute<bool>(
+              builder: (context) => PaymentView(totalAmount: totalAmount),
             );
           }
         }

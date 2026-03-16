@@ -29,13 +29,14 @@ class _StayManagementState extends State<StayManagement> {
   @override
   void initState() {
     super.initState();
-    _detailsFuture = _bookingRepository.getCurrentStayDetails(widget.bookingId);
+    _detailsFuture = _bookingRepository.getBookingDetailsWithServices(
+      widget.bookingId,
+    );
   }
 
   Future<void> _pickCheckout() async {
     final current = _checkoutDateTime!;
     final now = DateTime.now();
-    // Prevent initialDate being before firstDate (now)
     final initialDate = current.isBefore(now) ? now : current;
 
     final date = await showDatePicker(
@@ -45,19 +46,9 @@ class _StayManagementState extends State<StayManagement> {
       lastDate: now.add(const Duration(days: 365)),
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(current),
-    );
-    if (time == null || !mounted) return;
+
     setState(() {
-      _checkoutDateTime = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        time.hour,
-        time.minute,
-      );
+      _checkoutDateTime = DateTime(date.year, date.month, date.day, 12, 0);
     });
   }
 

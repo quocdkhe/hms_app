@@ -37,18 +37,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(initial ?? DateTime.now()),
-    );
-    if (time == null || !mounted) return;
-    final result = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
+
+    final hour = isCheckIn ? 14 : 12;
+    final result = DateTime(date.year, date.month, date.day, hour, 0);
+
     setState(() {
       if (isCheckIn) {
         _checkIn = result;

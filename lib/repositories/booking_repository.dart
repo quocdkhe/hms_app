@@ -68,10 +68,17 @@ class BookingRepository {
     }
 
     // Step 2: Create booking
+    final checkInDate = DateTime(
+      checkInDateTime.year,
+      checkInDateTime.month,
+      checkInDateTime.day,
+      14,
+      0,
+    );
     await _supabase.from('bookings').insert({
       'room_id': roomId,
       'user_id': userId,
-      'check_in_date_time': checkInDateTime.toUtc().toIso8601String(),
+      'check_in_date_time': checkInDate.toUtc().toIso8601String(),
       'actual_check_in_date_time': checkInNow
           ? checkInDateTime.toUtc().toIso8601String()
           : null,
@@ -101,7 +108,9 @@ class BookingRepository {
   }
 
   Future<List<BookingScheduleItem>> getAllBookings() async {
-    final response = await _supabase.from('bookings').select('''
+    final response = await _supabase
+        .from('bookings')
+        .select('''
           id,
           room_id,
           user_profiles(full_name, avatar_url, phone),
@@ -110,14 +119,15 @@ class BookingRepository {
           actual_check_out_date_time,
           actual_check_in_date_time,
           status
-        ''').order('check_in_date_time', ascending: false);
+        ''')
+        .order('check_in_date_time', ascending: false);
 
     return (response as List)
         .map((json) => BookingScheduleItem.fromJson(json))
         .toList();
   }
 
-  Future<BookingDetails> getCurrentStayDetails(int bookingId) async {
+  Future<BookingDetails> getBookingDetailsWithServices(int bookingId) async {
     final booking = await _supabase
         .from('bookings')
         .select('''
@@ -158,7 +168,7 @@ class BookingRepository {
   }
 
   Future<void> checkIn(int bookingId, int roomId) async {
-    if(await _isRoomUsingNow(roomId: roomId)){
+    if (await _isRoomUsingNow(roomId: roomId)) {
       throw Exception('Phòng chưa được checkout!');
     }
     await _supabase
@@ -174,22 +184,35 @@ class BookingRepository {
     required int roomId,
     required int bookingId,
     required DateTime checkInDateTime,
-    required DateTime checkOutDateTime
+    required DateTime checkOutDateTime,
   }) async {
-    if(!await _isBookingOverlap(
+    if (!await _isBookingOverlap(
       roomId: roomId,
       checkInDateTime: checkInDateTime,
       checkOutDateTime: checkOutDateTime,
-      bookingId: bookingId
-    )){
+      bookingId: bookingId,
+    )) {
       throw Exception("Phòng đã được đặt trong thời gian này!");
     }
     await _supabase
-          .from("bookings")
-          .update({
+        .from("bookings")
+        .update({
           "check_in_date_time": checkInDateTime.toUtc().toIso8601String(),
           "check_out_date_time": checkOutDateTime.toUtc().toIso8601String(),
-    }).eq('id', bookingId);
+        })
+        .eq('id', bookingId);
+  }
+
+  Future<void> checkOut(int bookingId) async {
+    await _supabase
+        .from('bookings')
+        .update({
+          'status': BookingStatus.checkedOut.name,
+          'actual_check_out_date_time': DateTime.now()
+              .toUtc()
+              .toIso8601String(),
+        })
+        .eq('id', bookingId);
   }
 
   /// --------------------------------------------------------------------
@@ -211,8 +234,8 @@ class BookingRepository {
         .eq('room_id', roomId)
         .neq('status', 'no_show')
         .or(
-      'actual_check_out_date_time.is.null,actual_check_out_date_time.gt.${checkInUtc.toIso8601String()}',
-    )
+          'actual_check_out_date_time.is.null,actual_check_out_date_time.gt.${checkInUtc.toIso8601String()}',
+        )
         .lt('check_in_date_time', checkOutUtc.toIso8601String());
 
     if (bookingId != null) {
