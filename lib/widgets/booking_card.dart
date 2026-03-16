@@ -19,6 +19,18 @@ class BookingCard extends StatelessWidget {
     };
   }
 
+  void _navigateToBookingDetails(BuildContext context) {
+    if (booking.status == BookingStatus.confirmed) {
+      Navigator.pushNamed(context, '/booking-details/${booking.id}');
+    } else if (booking.status == BookingStatus.checkedIn) {
+      Navigator.pushNamed(context, '/stay-management/${booking.id}');
+    } else if (booking.status == BookingStatus.checkedOut) {
+      Navigator.pushNamed(context, '/bill-details/${booking.id}');
+    } else if (booking.status == BookingStatus.noShow) {
+      Navigator.pushNamed(context, '/bill-details/${booking.id}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final checkIn = booking.checkInDateTime;
@@ -28,16 +40,16 @@ class BookingCard extends StatelessWidget {
 
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final (statusLabel, statusColor) = _statusDisplay(booking.status, colorScheme);
+    final (statusLabel, statusColor) = _statusDisplay(
+      booking.status,
+      colorScheme,
+    );
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.pushNamed(
-          context,
-          '/booking-details/${booking.id}',
-        ),
+        onTap: () => _navigateToBookingDetails(context),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(

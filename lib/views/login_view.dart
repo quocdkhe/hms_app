@@ -36,7 +36,7 @@ class _LoginViewState extends State<LoginView> {
 
       // 3. Since there was another async gap (await), we need one more check!
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/bill-details/29');
+      Navigator.of(context).pushReplacementNamed('/room-map');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
