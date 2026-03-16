@@ -95,6 +95,7 @@ class BookingRepository {
         .select('''
           id,
           room_id,
+          rooms(room_name),
           user_profiles(full_name, avatar_url, phone),
           check_in_date_time,
           check_out_date_time,
@@ -113,6 +114,7 @@ class BookingRepository {
         .select('''
           id,
           room_id,
+          rooms(room_name),
           user_profiles(full_name, avatar_url, phone),
           check_in_date_time,
           check_out_date_time,
@@ -120,6 +122,30 @@ class BookingRepository {
           actual_check_in_date_time,
           status
         ''')
+        .order('check_in_date_time', ascending: false);
+
+    return (response as List)
+        .map((json) => BookingScheduleItem.fromJson(json))
+        .toList();
+  }
+
+  Future<List<BookingScheduleItem>> getBookingsByCustomerId(
+    String userId,
+  ) async {
+    final response = await _supabase
+        .from('bookings')
+        .select('''
+          id,
+          room_id,
+          rooms(room_name),
+          user_profiles(full_name, avatar_url, phone),
+          check_in_date_time,
+          check_out_date_time,
+          actual_check_out_date_time,
+          actual_check_in_date_time,
+          status
+        ''')
+        .eq('user_id', userId)
         .order('check_in_date_time', ascending: false);
 
     return (response as List)
