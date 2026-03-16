@@ -3,12 +3,15 @@ import 'package:hms_app/models/dtos/billing_item.dart';
 import 'package:hms_app/models/dtos/booking_details.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/models/fee.dart';
+import 'package:hms_app/models/dtos/hotel_pricing_config.dart';
+import 'package:hms_app/providers/pricing_config_provider.dart';
 import 'package:hms_app/repositories/booking_repository.dart';
 import 'package:hms_app/repositories/fee_repository.dart';
 import 'package:hms_app/repositories/room_repository.dart';
 import 'package:hms_app/utils/calculate_room_price.dart';
 import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/widgets/time_row.dart';
+import 'package:provider/provider.dart';
 
 class CheckOutView extends StatefulWidget {
   final int bookingId;
@@ -32,7 +35,6 @@ class _CheckOutViewState extends State<CheckOutView> {
   late Future<_CheckoutData> _dataFuture;
 
   List<BillingItem> _billingItems = [];
-  List<BillingItem> _roomFeeItems = [];
   List<BillingItem> _extraItems = [];
 
   @override
@@ -56,16 +58,21 @@ class _CheckOutViewState extends State<CheckOutView> {
         .toList();
   }
 
-  void _initRoomFeeItems(BookingDetails booking, RoomDetails room) {
+  List<BillingItem> _getRoomFeeItems({
+    required BookingDetails booking,
+    required RoomDetails room,
+    required HotelPricingConfig config,
+  }) {
     final breakdown = calculateHotelPrice(
       checkInDateTime: booking.checkInDateTime,
       checkOutDateTime: booking.checkoutDateTime,
       actualCheckInDateTime: booking.actualCheckInDateTime,
       actualCheckOutDateTime: booking.actualCheckOutDateTime ?? DateTime.now(),
       pricePerNight: room.pricePerNight,
+      config: config,
     );
 
-    _roomFeeItems = [
+    return [
       BillingItem(
         title: 'Tiền phòng cơ bản',
         subtitle: '${formatVND(room.pricePerNight)} đ / đêm',
@@ -98,16 +105,15 @@ class _CheckOutViewState extends State<CheckOutView> {
     if (mounted) {
       setState(() {
         _initBillingItems(booking);
-        _initRoomFeeItems(booking, room);
       });
     }
     return _CheckoutData(booking: booking, room: room);
   }
 
-  Future<void> _goToPayment() async {
+  Future<void> _goToPayment(List<BillingItem> roomFeeItems) async {
     final totalAmount = [
       ..._billingItems,
-      ..._roomFeeItems,
+      ...roomFeeItems,
       ..._extraItems,
     ].fold(0, (sum, item) => sum + item.price);
 
@@ -118,7 +124,7 @@ class _CheckOutViewState extends State<CheckOutView> {
     if (confirmed != true) return;
 
     try {
-      final allItems = [..._billingItems, ..._roomFeeItems, ..._extraItems];
+      final allItems = [..._billingItems, ...roomFeeItems, ..._extraItems];
       await _feeRepository.addFees(allItems, widget.bookingId);
       await _bookingRepository.checkOut(widget.bookingId);
 
@@ -178,11 +184,13 @@ class _CheckOutViewState extends State<CheckOutView> {
                 ),
                 keyboardType: TextInputType.number,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty)
+                  if (v == null || v.trim().isEmpty) {
                     return 'Vui lòng nhập số tiền';
+                  }
                   final parsed = int.tryParse(v.trim().replaceAll(',', ''));
-                  if (parsed == null || parsed <= 0)
+                  if (parsed == null || parsed <= 0) {
                     return 'Số tiền không hợp lệ';
+                  }
                   return null;
                 },
                 textInputAction: TextInputAction.done,
@@ -224,6 +232,9 @@ class _CheckOutViewState extends State<CheckOutView> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch the pricing config to rebuild when it changes
+    final pricingConfig = context.watch<PricingConfigProvider>().config;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Check Out')),
       body: FutureBuilder<_CheckoutData>(
@@ -242,6 +253,12 @@ class _CheckOutViewState extends State<CheckOutView> {
           final booking = data.booking;
           final colorScheme = Theme.of(context).colorScheme;
           final textTheme = Theme.of(context).textTheme;
+
+          final roomFeeItems = _getRoomFeeItems(
+            booking: booking,
+            room: room,
+            config: pricingConfig,
+          );
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -470,33 +487,45 @@ class _CheckOutViewState extends State<CheckOutView> {
               const SizedBox(height: 12),
 
               // ── Room Fee sub-section ──────────────────────────────────────
-              Text(
-                'Tiền phòng',
-                style: textTheme.labelMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Tiền phòng',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.money_outlined, size: 18),
+                    label: const Text('Cài đặt phụ phí'),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/penalty-fee-config');
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 6),
               Card(
                 child: Column(
                   children: [
-                    for (int i = 0; i < _roomFeeItems.length; i++) ...[
+                    for (int i = 0; i < roomFeeItems.length; i++) ...[
                       ListTile(
                         title: Text(
-                          _roomFeeItems[i].title,
+                          roomFeeItems[i].title,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: Text(_roomFeeItems[i].subtitle),
+                        subtitle: Text(roomFeeItems[i].subtitle),
                         trailing: Text(
-                          '${formatVND(_roomFeeItems[i].price)} đ',
+                          '${formatVND(roomFeeItems[i].price)} đ',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
                         ),
                       ),
-                      if (i < _roomFeeItems.length - 1)
-                        const Divider(height: 1),
+                      if (i < roomFeeItems.length - 1) const Divider(height: 1),
                     ],
                   ],
                 ),
@@ -564,37 +593,59 @@ class _CheckOutViewState extends State<CheckOutView> {
           );
         },
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      bottomNavigationBar: FutureBuilder<_CheckoutData>(
+        future: _dataFuture,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const SizedBox.shrink();
+
+          final data = snapshot.data!;
+          final roomFeeItems = _getRoomFeeItems(
+            booking: data.booking,
+            room: data.room,
+            config: pricingConfig,
+          );
+          final totalAmount = [
+            ..._billingItems,
+            ...roomFeeItems,
+            ..._extraItems,
+          ].fold(0, (sum, item) => sum + item.price);
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Tổng cộng',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Tổng cộng',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${formatVND(totalAmount)} đ',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  '${formatVND([..._billingItems, ..._roomFeeItems, ..._extraItems].fold(0, (sum, item) => sum + item.price))} đ',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(height: 8),
+                FilledButton(
+                  onPressed: () => _goToPayment(roomFeeItems),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
                   ),
+                  child: const Text('Thanh toán'),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: _goToPayment,
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-              ),
-              child: const Text('Thanh toán'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

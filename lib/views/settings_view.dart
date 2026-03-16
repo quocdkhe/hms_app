@@ -77,6 +77,15 @@ class _SettingsViewState extends State<SettingsView> {
               Navigator.pushNamed(context, '/service-list');
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.money, color: Colors.orange),
+            trailing: const Icon(Icons.chevron_right),
+            title: const Text('Phí phạt'),
+            subtitle: const Text('Các phí phạt quá giờ'),
+            onTap: () {
+              Navigator.pushNamed(context, '/penalty-fee-config');
+            },
+          ),
           const Divider(),
           Padding(
             padding: const EdgeInsets.all(16.0),

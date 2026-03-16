@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/providers/color_provider.dart';
+import 'package:hms_app/providers/pricing_config_provider.dart';
 import 'package:hms_app/views/bill_details_view.dart';
 import 'package:hms_app/views/booking_details_view.dart';
 import 'package:hms_app/views/check_out_view.dart';
@@ -9,6 +10,7 @@ import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
 import 'package:hms_app/views/payment_view.dart';
 import 'package:hms_app/views/room_details_view.dart';
+import 'package:hms_app/views/settings/penalty_fee_config/penalty_fee_config.dart';
 import 'package:hms_app/views/settings/room/add_room.dart';
 import 'package:hms_app/views/settings/room/room_list.dart';
 import 'package:hms_app/views/settings/room_type/room_type_list.dart';
@@ -35,6 +37,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ColorProvider()),
+        ChangeNotifierProvider(create: (_) => PricingConfigProvider()),
       ],
       child: const HMSApp(),
     ),
@@ -78,6 +81,7 @@ class HMSApp extends StatelessWidget {
         '/service-list': (context) => const ServiceList(),
         '/create-service': (context) => const CreateServiceView(),
         '/add-room': (context) => const AddRoom(),
+        '/penalty-fee-config': (context) => const PenaltyFeeConfig(),
       },
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name!);
