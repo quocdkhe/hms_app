@@ -103,10 +103,6 @@ class _BookingSearchViewState extends State<BookingSearchView> {
                     itemBuilder: (context, index) {
                       final booking = _filteredBookings[index];
                       return GestureDetector(
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          '/booking-details/${booking.id}',
-                        ),
                         child: BookingCard(booking: booking),
                       );
                     },
