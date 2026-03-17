@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hms_app/models/dtos/RoomSearchResult.dart';
+import 'package:hms_app/models/dtos/room_search_result.dart';
 import 'package:hms_app/models/dtos/room_type_option.dart';
 import 'package:hms_app/repositories/room_type_repository.dart';
 import 'package:hms_app/widgets/app_drawer.dart';

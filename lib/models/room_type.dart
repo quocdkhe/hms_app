@@ -8,6 +8,7 @@ class RoomType {
   final int numberOfBed;
   final int pricePerNight;
   final String? description;
+  final String? addOn;
 
   RoomType({
     required this.id,
@@ -16,6 +17,7 @@ class RoomType {
     required this.numberOfBed,
     required this.pricePerNight,
     this.description,
+    this.addOn,
   });
 
   factory RoomType.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class RoomType {
       numberOfBed: parseInt(json['number_of_bed']),
       pricePerNight: parseInt(json['price_per_night']),
       description: json['description'] as String?,
+      addOn: json['add_on'] as String?,
     );
   }
 
@@ -37,6 +40,7 @@ class RoomType {
       'number_of_bed': numberOfBed,
       'price_per_night': pricePerNight,
       'description': description,
+      'add_on': addOn,
     };
   }
 
