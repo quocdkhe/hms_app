@@ -393,6 +393,8 @@ class _FindRoomViewState extends State<FindRoomView> {
                           MaterialPageRoute(
                             builder: (_) => CreateBookingManyScreen(
                               roomIds: selectedRoomIds,
+                              checkIn: checkInDate,
+                              checkOut: checkOutDate,
                             ),
                           ),
                         );

@@ -9,9 +9,16 @@ import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/widgets/date_time_picker.dart';
 
 class CreateBookingManyScreen extends StatefulWidget {
-  const CreateBookingManyScreen({super.key, required this.roomIds});
+  const CreateBookingManyScreen({
+    super.key,
+    required this.roomIds,
+    this.checkIn,
+    this.checkOut,
+  });
 
   final Set<int> roomIds;
+  final DateTime? checkIn;
+  final DateTime? checkOut;
 
   @override
   State<CreateBookingManyScreen> createState() =>
@@ -37,6 +44,8 @@ class _CreateBookingManyScreenState extends State<CreateBookingManyScreen> {
   @override
   void initState() {
     super.initState();
+    _checkIn = widget.checkIn;
+    _checkOut = widget.checkOut;
     _roomDetailsFuture = Future.wait(
       widget.roomIds.map((id) => _roomRepository.getRoomDetails(id)),
     );
@@ -139,7 +148,7 @@ class _CreateBookingManyScreenState extends State<CreateBookingManyScreen> {
         );
       }
       if (mounted) {
-        Navigator.pop(context, true);
+        Navigator.of(context).pushReplacementNamed('/room-map');
       }
     } catch (e) {
       if (mounted) {
