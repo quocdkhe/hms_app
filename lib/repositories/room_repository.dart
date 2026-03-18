@@ -1,10 +1,8 @@
-import 'package:flutter/foundation.dart';
-import 'package:hms_app/models/dtos/RoomSearchResult.dart';
+import 'package:hms_app/models/dtos/room_search_result.dart';
 import 'package:hms_app/models/dtos/booking_schedule_item.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/models/room.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:hms_app/models/room_type.dart';
 
 class RoomRepository {
   final _supabase = Supabase.instance.client;
@@ -43,7 +41,7 @@ class RoomRepository {
     }
     return Room.fromJson(response);
   }
-  
+
   Future<List<RoomSearchResult>> searchRooms({
     int? numberOfBed,
     List<String>? typeNames,

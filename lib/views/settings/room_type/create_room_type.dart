@@ -25,6 +25,7 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
   late TextEditingController _priceController;
   late TextEditingController _bedController;
   late TextEditingController _descriptionController;
+  late TextEditingController _addOnsController;
 
   XFile? _newImageFile;
 
@@ -42,6 +43,9 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
     );
     _descriptionController = TextEditingController(
       text: widget.roomType?.description ?? '',
+    );
+    _addOnsController = TextEditingController(
+      text: widget.roomType?.addOn ?? '',
     );
   }
 
@@ -94,6 +98,9 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
           description: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
+          addOn: _addOnsController.text.trim().isEmpty
+              ? null
+              : _addOnsController.text.trim(),
           imageUrl: finalImageUrl,
         );
       } else {
@@ -105,6 +112,9 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
           description: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
+          addOn: _addOnsController.text.trim().isEmpty
+              ? null
+              : _addOnsController.text.trim(),
           imageUrl: finalImageUrl,
         );
       }
@@ -142,6 +152,7 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
     _priceController.dispose();
     _bedController.dispose();
     _descriptionController.dispose();
+    _addOnsController.dispose();
     super.dispose();
   }
 
@@ -261,6 +272,15 @@ class _CreateRoomTypeViewState extends State<CreateRoomTypeView> {
               controller: _descriptionController,
               decoration: const InputDecoration(
                 labelText: 'Miêu tả',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _addOnsController,
+              decoration: const InputDecoration(
+                labelText: 'Tiện ích bổ sung',
                 border: OutlineInputBorder(),
               ),
               maxLines: 4,

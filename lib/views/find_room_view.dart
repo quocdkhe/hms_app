@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hms_app/models/dtos/RoomSearchResult.dart';
+import 'package:hms_app/models/dtos/room_search_result.dart';
 import 'package:hms_app/models/dtos/room_type_option.dart';
 import 'package:hms_app/repositories/room_type_repository.dart';
 import 'package:hms_app/widgets/app_drawer.dart';
@@ -202,6 +202,7 @@ class _FindRoomViewState extends State<FindRoomView> {
             const SizedBox(height: 16),
 
             // Room type multi-select
+            // Room type multi-select
             Text(
               'Loại Phòng',
               style: TextStyle(
@@ -213,22 +214,20 @@ class _FindRoomViewState extends State<FindRoomView> {
             if (_roomTypes.isEmpty)
               LinearProgressIndicator(color: color.primary)
             else
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _roomTypes.map((type) {
-                    final isSelected = selectedRoomTypeIds.contains(type.id);
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _roomTypes
+                    .map(
+                      (type) => FilterChip(
                         label: Text(type.typeName),
-                        selected: isSelected,
+                        selected: selectedRoomTypeIds.contains(type.id),
                         onSelected: (_) => _toggleRoomType(type),
                       ),
-                    );
-                  }).toList(),
-                ),
+                    )
+                    .toList(),
               ),
+
             const SizedBox(height: 24),
 
             // Search button
@@ -376,45 +375,37 @@ class _FindRoomViewState extends State<FindRoomView> {
                   );
                 },
               ),
-
-            const SizedBox(height: 24),
-
-            // Book button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: selectedRoomIndices.isNotEmpty
-                    ? () {
-                        final selectedRoomIds = selectedRoomIndices
-                            .map((i) => _filteredRooms[i].id)
-                            .toSet();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => CreateBookingManyScreen(
-                              roomIds: selectedRoomIds,
-                              checkIn: checkInDate,
-                              checkOut: checkOutDate,
-                            ),
-                          ),
-                        );
-                      }
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color.secondary,
-                  foregroundColor: color.onSecondary,
-                  disabledBackgroundColor: color.surfaceContainerHighest,
-                  disabledForegroundColor: color.onSurfaceVariant,
-                ),
-                child: Text(
-                  selectedRoomIndices.isEmpty
-                      ? 'Đặt Phòng'
-                      : 'Đặt Phòng (${selectedRoomIndices.length})',
-                ),
-              ),
-            ),
-            const SizedBox(height: 40),
           ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          onPressed: selectedRoomIndices.isNotEmpty
+              ? () {
+                  final selectedRoomIds = selectedRoomIndices
+                      .map((i) => _filteredRooms[i].id)
+                      .toSet();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CreateBookingManyScreen(
+                        roomIds: selectedRoomIds,
+                        checkIn: checkInDate,
+                        checkOut: checkOutDate,
+                      ),
+                    ),
+                  );
+                }
+              : null,
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+          ),
+          child: Text(
+            selectedRoomIndices.isEmpty
+                ? 'Đặt Phòng'
+                : 'Đặt Phòng (${selectedRoomIndices.length})',
+          ),
         ),
       ),
     );
