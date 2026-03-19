@@ -43,7 +43,7 @@ class RoomRepository {
     }
     return Room.fromJson(response);
   }
-  
+
   Future<List<RoomSearchResult>> searchRooms({
     int? numberOfBed,
     List<String>? typeNames,
@@ -65,7 +65,7 @@ class RoomRepository {
           .toSet();
     }
 
-    // 2. Get matching room types
+    // 2. Get matching room types — include type_name for grouping
     var typeQuery = _supabase
         .from('room_types')
         .select('id, type_name, number_of_bed, image_url, description');
@@ -97,16 +97,19 @@ class RoomRepository {
 
     final roomResponse = await roomQuery;
 
-    // 4. Map to RoomSearchResult
+    // 4. Map to RoomSearchResult — wrap as { room_types: {...} } to match fromJson
     return (roomResponse as List<dynamic>).map((row) {
       final roomType = roomTypeMap[row['room_type_id'] as int]!;
-      return RoomSearchResult(
-        id: row['id'],
-        roomName: row['room_name'],
-        numberOfBed: roomType['number_of_bed'],
-        imageUrl: roomType['image_url'],
-        description: roomType['description'],
-      );
+      return RoomSearchResult.fromJson({
+        'id': row['id'],
+        'room_name': row['room_name'],
+        'room_types': {
+          'type_name': roomType['type_name'],
+          'number_of_bed': roomType['number_of_bed'],
+          'image_url': roomType['image_url'],
+          'description': roomType['description'],
+        },
+      });
     }).toList();
   }
 
