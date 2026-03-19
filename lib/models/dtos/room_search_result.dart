@@ -1,6 +1,3 @@
-import 'package:hms_app/models/room.dart';
-import 'package:hms_app/models/room_type.dart';
-
 class RoomSearchResult {
   final int id;
   final String roomName;

@@ -10,6 +10,7 @@ class RoomTypeRepository {
     required int numberOfBed,
     required int pricePerNight,
     String? description,
+    String? addOn,
     String? imageUrl,
   }) async {
     await _supabase.from('room_types').insert({
@@ -17,6 +18,7 @@ class RoomTypeRepository {
       'number_of_bed': numberOfBed,
       'price_per_night': pricePerNight,
       'description': description,
+      'add_on': addOn,
       'image_url': imageUrl,
     });
   }
@@ -51,6 +53,7 @@ class RoomTypeRepository {
     required int numberOfBed,
     required int pricePerNight,
     String? description,
+    String? addOn,
     String? imageUrl,
   }) async {
     await _supabase
@@ -60,6 +63,7 @@ class RoomTypeRepository {
           'number_of_bed': numberOfBed,
           'price_per_night': pricePerNight,
           'description': description,
+          'add_on': addOn,
           'image_url': imageUrl,
         })
         .eq('id', id);
