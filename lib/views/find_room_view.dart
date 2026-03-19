@@ -22,7 +22,7 @@ class _FindRoomViewState extends State<FindRoomView> {
   bool _isLoading = false;
 
   Set<int> selectedRoomTypeIds = {};
-  Set<int> selectedRoomIds = {};
+  Set<int> selectedRoomIndices = {};
   DateTime? checkInDate;
   DateTime? checkOutDate;
   final TextEditingController bedNumberController = TextEditingController();
@@ -118,7 +118,7 @@ class _FindRoomViewState extends State<FindRoomView> {
 
       setState(() {
         _filteredRooms = rooms;
-        selectedRoomIds.clear();
+        selectedRoomIndices.clear();
       });
     } catch (e) {
       if (mounted) {
@@ -271,7 +271,7 @@ class _FindRoomViewState extends State<FindRoomView> {
                 children: grouped.entries.map((entry) {
                   final rooms = entry.value;
                   final selectedCountInGroup = rooms
-                      .where((r) => selectedRoomIds.contains(r.id))
+                      .where((r) => selectedRoomIndices.contains(r.id))
                       .length;
 
                   return Card(
@@ -340,13 +340,15 @@ class _FindRoomViewState extends State<FindRoomView> {
                         ],
                       ),
                       children: rooms.map((room) {
-                        final isSelected = selectedRoomIds.contains(room.id);
+                        final isSelected = selectedRoomIndices.contains(
+                          room.id,
+                        );
                         return InkWell(
                           onTap: () => setState(() {
                             if (isSelected) {
-                              selectedRoomIds.remove(room.id);
+                              selectedRoomIndices.remove(room.id);
                             } else {
-                              selectedRoomIds.add(room.id);
+                              selectedRoomIndices.add(room.id);
                             }
                           }),
                           child: Container(
