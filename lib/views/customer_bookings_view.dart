@@ -17,6 +17,31 @@ class _CustomerBookingsViewState extends State<CustomerBookingsView> {
   late Future<List<BookingScheduleItem>> _bookingsFuture;
   final _bookingRepository = BookingRepository();
 
+  // Index corresponding to BookingStatus order:
+  // 0 → confirmed, 1 → checkedIn, 2 → checkedOut, 3 → noShow
+  int _selectedTabIndex = 0;
+
+  static const _tabLabels = [
+    'Đã đặt cọc',
+    'Đang ở',
+    'Đã trả phòng',
+    'Vắng mặt',
+  ];
+
+  static const _tabStatuses = [
+    BookingStatus.confirmed,
+    BookingStatus.checkedIn,
+    BookingStatus.checkedOut,
+    BookingStatus.noShow,
+  ];
+
+  static const _emptyMessages = [
+    'Không có đặt phòng đã xác nhận',
+    'Không có khách đang ở',
+    'Không có lịch sử trả phòng',
+    'Không có trường hợp vắng mặt',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -34,11 +59,6 @@ class _CustomerBookingsViewState extends State<CustomerBookingsView> {
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')} '
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
   }
-
-  /// Returns true for bookings the customer is currently involved in
-  /// (confirmed / upcoming, checked-in, no-show that may still need action).
-  bool _isCurrent(BookingScheduleItem b) =>
-      b.status != BookingStatus.checkedOut;
 
   void _navigateToBooking(BookingScheduleItem booking) async {
     final route = booking.status == BookingStatus.checkedIn
@@ -109,12 +129,51 @@ class _CustomerBookingsViewState extends State<CustomerBookingsView> {
                   ],
                 ),
               ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () => setState(() => _loadBookings()),
+              ),
             ],
           ),
 
           const Divider(height: 32),
 
-          // ── Bookings future ─────────────────────────────────────────
+          // ── Section header ──────────────────────────────────────────
+          const Text(
+            'Danh sách đặt phòng',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+
+          // ── 4-status ToggleButtons ──────────────────────────────────
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ToggleButtons(
+              isSelected: List.generate(
+                _tabStatuses.length,
+                (i) => i == _selectedTabIndex,
+              ),
+              onPressed: (index) {
+                setState(() {
+                  _selectedTabIndex = index;
+                });
+              },
+              borderRadius: BorderRadius.circular(8),
+              constraints: const BoxConstraints(minHeight: 36, minWidth: 90),
+              children: _tabLabels
+                  .map(
+                    (label) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(label, style: const TextStyle(fontSize: 13)),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ── Filtered booking list ───────────────────────────────────
           FutureBuilder<List<BookingScheduleItem>>(
             future: _bookingsFuture,
             builder: (context, snapshot) {
@@ -133,82 +192,33 @@ class _CustomerBookingsViewState extends State<CustomerBookingsView> {
               }
 
               final bookings = snapshot.data ?? [];
-              final current = bookings.where(_isCurrent).toList();
-              final completed =
-                  bookings.where((b) => !_isCurrent(b)).toList();
+              final activeStatus = _tabStatuses[_selectedTabIndex];
+              final filtered =
+                  bookings.where((b) => b.status == activeStatus).toList();
+
+              if (filtered.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    _emptyMessages[_selectedTabIndex],
+                    style: const TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
+                  ),
+                );
+              }
 
               return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Section: Current bookings ────────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Đặt phòng hiện tại',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.refresh),
-                        onPressed: () => setState(() => _loadBookings()),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  if (current.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text(
-                        'Không có đặt phòng hiện tại',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    )
-                  else
-                    ...current.map(
+                children: filtered
+                    .map(
                       (b) => _BookingItem(
                         booking: b,
                         onTap: () => _navigateToBooking(b),
                         formatDate: _formatDateCompact,
                       ),
-                    ),
-
-                  const Divider(height: 32),
-
-                  // ── Section: Completed bookings ──────────────────────
-                  const Text(
-                    'Đã hoàn thành',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  if (completed.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text(
-                        'Không có lịch sử đặt phòng',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey,
-                        ),
-                      ),
                     )
-                  else
-                    ...completed.map(
-                      (b) => _BookingItem(
-                        booking: b,
-                        onTap: () => _navigateToBooking(b),
-                        formatDate: _formatDateCompact,
-                      ),
-                    ),
-                ],
+                    .toList(),
               );
             },
           ),
@@ -231,23 +241,11 @@ class _BookingItem extends StatelessWidget {
     required this.formatDate,
   });
 
-  (String label, Color color) _statusDisplay(
-    BookingStatus status,
-    ColorScheme cs,
-  ) {
-    return switch (status) {
-      BookingStatus.confirmed => ('Đã đặt cọc', cs.primary),
-      BookingStatus.checkedIn => ('Đang ở', Colors.green),
-      BookingStatus.checkedOut => ('Đã trả phòng', cs.outline),
-      BookingStatus.noShow => ('Vắng mặt', Colors.red),
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-    final (statusLabel, statusColor) = _statusDisplay(booking.status, colorScheme);
+
     final roomLabel = booking.roomName != null
         ? 'Phòng ${booking.roomName}'
         : 'Phòng #${booking.roomId}';
@@ -262,47 +260,29 @@ class _BookingItem extends StatelessWidget {
           roomLabel,
           style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today_outlined,
-                  size: 13,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    dateRange,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(
+            children: [
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 13,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  dateRange,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Chip(
-              label: Text(
-                statusLabel,
-                style: textTheme.labelSmall?.copyWith(
-                  color: statusColor,
-                  fontWeight: FontWeight.w600,
-                ),
               ),
-              side: BorderSide(color: statusColor.withValues(alpha: 0.4)),
-              backgroundColor: statusColor.withValues(alpha: 0.08),
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ],
+            ],
+          ),
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
         onTap: onTap,
-        isThreeLine: true,
       ),
     );
   }
