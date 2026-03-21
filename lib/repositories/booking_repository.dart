@@ -8,34 +8,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class BookingRepository {
   final _supabase = Supabase.instance.client;
 
-  Future<List<RoomCardItem>> getRoomMap() async {
-    final response = await _supabase.from('rooms').select('''
-      id,
-      room_name,
-      room_types(type_name),
-      bookings!left(
-        status,
-        actual_check_in_date_time,
-        check_out_date_time
-      )
-    ''');
-
-    var responseList = (response as List)
-        .map((roomData) => RoomCardItem.mapRoomCardItem(roomData))
-        .toList();
-    debugPrint('┌────┬──────────┬─────────────┬─────────────┐');
-    debugPrint('│ ID │ Room     │ Type        │ Status      │');
-    debugPrint('├────┼──────────┼─────────────┼─────────────┤');
-    for (final r in responseList) {
-      debugPrint(
-        '│ ${r.id.toString().padRight(3)}│ ${r.roomName.padRight(9)}│ ${r.roomTypeName.padRight(12)}│ ${r.status.name.padRight(12)}│',
-      );
-    }
-    debugPrint('└────┴──────────┴─────────────┴─────────────┘');
-    debugPrint('Total: ${responseList.length} rooms');
-    return responseList;
-  }
-
   Future<void> createBooking({
     required int roomId,
     required String userId,

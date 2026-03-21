@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hms_app/models/dtos/room_card_item.dart';
-import 'package:hms_app/repositories/booking_repository.dart';
+import 'package:hms_app/repositories/room_repository.dart';
 import 'package:hms_app/widgets/app_drawer.dart';
 import 'package:hms_app/widgets/room_card.dart';
 
 enum RoomFilter {
   all('Tất cả'),
   empty('Trống'),
-  checkInToday('Check-in hôm nay'),
   occupied('Đang SD');
 
   final String label;
@@ -24,7 +23,7 @@ class RoomMapView extends StatefulWidget {
 class _RoomMapViewState extends State<RoomMapView> {
   RoomFilter _selectedFilter = RoomFilter.all;
 
-  final _bookingRepository = BookingRepository();
+  final _roomRepository = RoomRepository();
   List<RoomCardItem> _rooms = [];
   bool _isLoading = true;
 
@@ -34,9 +33,22 @@ class _RoomMapViewState extends State<RoomMapView> {
     _loadRooms();
   }
 
+  List<RoomCardItem> get _filteredRooms {
+    return _rooms.where((room) {
+      return switch (_selectedFilter) {
+        RoomFilter.all => true,
+        RoomFilter.empty => room.status == RoomStatus.available,
+        RoomFilter.occupied => room.status == RoomStatus.using,
+      };
+    }).toList();
+  }
+
   Future<void> _loadRooms() async {
+    setState(() {
+      _isLoading = true; // 👈 add this
+    });
     try {
-      final rooms = await _bookingRepository.getRoomMap();
+      final rooms = await _roomRepository.getRoomMap();
       if (mounted) {
         setState(() {
           _rooms = rooms;
@@ -58,24 +70,27 @@ class _RoomMapViewState extends State<RoomMapView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sơ đồ phòng')),
+      appBar: AppBar(
+        title: const Text('Sơ đồ phòng'),
+        actions: [
+          IconButton(onPressed: _loadRooms, icon: const Icon(Icons.refresh)),
+        ],
+      ),
       drawer: const AppDrawer(),
       body: Column(
         children: [
           // ── Bộ lọc ──────────────────────────────────────────────
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
               children: RoomFilter.values.map((filter) {
                 final isSelected = filter == _selectedFilter;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(filter.label),
-                    selected: isSelected,
-                    onSelected: (_) => setState(() => _selectedFilter = filter),
-                  ),
+                return FilterChip(
+                  label: Text(filter.label),
+                  selected: isSelected,
+                  onSelected: (_) => setState(() => _selectedFilter = filter),
                 );
               }).toList(),
             ),
@@ -87,7 +102,7 @@ class _RoomMapViewState extends State<RoomMapView> {
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
                     onRefresh: _loadRooms,
-                    child: _rooms.isEmpty
+                    child: _filteredRooms.isEmpty
                         ? ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             children: const [
@@ -107,9 +122,9 @@ class _RoomMapViewState extends State<RoomMapView> {
                                   mainAxisSpacing: 12,
                                   childAspectRatio: 1.1,
                                 ),
-                            itemCount: _rooms.length,
+                            itemCount: _filteredRooms.length,
                             itemBuilder: (context, index) =>
-                                RoomCard(room: _rooms[index]),
+                                RoomCard(room: _filteredRooms[index]),
                           ),
                   ),
           ),
