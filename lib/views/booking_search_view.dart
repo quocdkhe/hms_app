@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hms_app/models/dtos/booking_schedule_item.dart';
-import 'package:hms_app/repositories/booking_repository.dart';
+import 'package:hms_app/models/dtos/customer_short_detail.dart';
+import 'package:hms_app/repositories/user_repository.dart';
 import 'package:hms_app/widgets/app_drawer.dart';
-import 'package:hms_app/widgets/booking_card.dart';
 
 class BookingSearchView extends StatefulWidget {
   const BookingSearchView({super.key});
@@ -12,17 +11,17 @@ class BookingSearchView extends StatefulWidget {
 }
 
 class _BookingSearchViewState extends State<BookingSearchView> {
-  final _bookingRepository = BookingRepository();
+  final _userRepository = UserRepository();
   final _searchController = TextEditingController();
-  List<BookingScheduleItem> _allBookings = [];
-  List<BookingScheduleItem> _filteredBookings = [];
+  List<CustomerShortDetail> _allCustomers = [];
+  List<CustomerShortDetail> _filteredCustomers = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadBookings();
-    _searchController.addListener(_filterBookings);
+    _loadCustomers();
+    _searchController.addListener(_filterCustomers);
   }
 
   @override
@@ -31,36 +30,39 @@ class _BookingSearchViewState extends State<BookingSearchView> {
     super.dispose();
   }
 
-  Future<void> _loadBookings() async {
+  Future<void> _loadCustomers() async {
     try {
-      final bookings = await _bookingRepository.getAllBookings();
+      final customers = await _userRepository.getAllCustomers();
       if (mounted) {
         setState(() {
-          _allBookings = bookings;
-          _filteredBookings = bookings;
+          _allCustomers = customers;
+          _filteredCustomers = customers;
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        debugPrint('Error loading bookings: $e');
+        debugPrint('Error loading customers: $e');
       }
     }
   }
 
-  void _filterBookings() {
+  void _filterCustomers() {
     final query = _searchController.text.trim();
     setState(() {
-      _filteredBookings = _allBookings.where((booking) {
-        // Strict requirement: only search by phone number
-        return booking.customerPhone.contains(query);
-      }).toList();
+      _filteredCustomers = query.isEmpty
+          ? _allCustomers
+          : _allCustomers
+              .where((c) => c.phone.contains(query))
+              .toList();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(title: const Text('Tìm khách hàng')),
       drawer: const AppDrawer(),
@@ -80,13 +82,17 @@ class _BookingSearchViewState extends State<BookingSearchView> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.outline,
+                    color: isDark
+                        ? colorScheme.outline.withValues(alpha: 0.6)
+                        : colorScheme.outline,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.outline,
+                    color: isDark
+                        ? colorScheme.outline.withValues(alpha: 0.6)
+                        : colorScheme.outline,
                   ),
                 ),
               ),
@@ -96,19 +102,99 @@ class _BookingSearchViewState extends State<BookingSearchView> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _filteredBookings.isEmpty
-                ? const Center(child: Text('Không có dữ liệu'))
+                : _filteredCustomers.isEmpty
+                ? const Center(child: Text('Không tìm thấy khách hàng'))
                 : ListView.builder(
-                    itemCount: _filteredBookings.length,
+                    itemCount: _filteredCustomers.length,
                     itemBuilder: (context, index) {
-                      final booking = _filteredBookings[index];
-                      return GestureDetector(
-                        child: BookingCard(booking: booking),
+                      final customer = _filteredCustomers[index];
+                      return _CustomerCard(
+                        customer: customer,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/customer-bookings/${customer.userId}',
+                          arguments: customer,
+                        ),
                       );
                     },
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Customer card widget ──────────────────────────────────────────────────────
+
+class _CustomerCard extends StatelessWidget {
+  final CustomerShortDetail customer;
+  final VoidCallback onTap;
+
+  const _CustomerCard({required this.customer, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundImage: (customer.avatar != null &&
+                        customer.avatar!.isNotEmpty)
+                    ? NetworkImage(customer.avatar!)
+                    : null,
+                child: (customer.avatar == null || customer.avatar!.isEmpty)
+                    ? const Icon(Icons.person, size: 28)
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      customer.name,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.phone_outlined,
+                          size: 14,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          customer.phone,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

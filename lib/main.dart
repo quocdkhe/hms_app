@@ -6,6 +6,7 @@ import 'package:hms_app/views/booking_details_view.dart';
 import 'package:hms_app/views/check_out_view.dart';
 import 'package:hms_app/views/create_booking.dart';
 import 'package:hms_app/views/booking_search_view.dart';
+import 'package:hms_app/views/customer_bookings_view.dart';
 import 'package:hms_app/views/find_room_view.dart';
 import 'package:hms_app/views/my_profile_view.dart';
 import 'package:hms_app/views/payment_view.dart';
@@ -18,6 +19,7 @@ import 'package:hms_app/views/settings/service/create_service_view.dart';
 import 'package:hms_app/views/settings/service/service_list.dart';
 import 'package:hms_app/views/settings_view.dart';
 import 'package:hms_app/views/stay_management.dart';
+import 'package:hms_app/models/dtos/customer_short_detail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'views/room_map_view.dart';
 import 'views/login_view.dart';
@@ -95,6 +97,17 @@ class HMSApp extends StatelessWidget {
               builder: (context) => RoomDetailScreen(roomId: roomId),
             );
           }
+        }
+
+        // Match: /customer-bookings/:userId
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'customer-bookings') {
+          final customer =
+              settings.arguments as CustomerShortDetail;
+          return MaterialPageRoute(
+            builder: (context) =>
+                CustomerBookingsView(customer: customer),
+          );
         }
 
         // Match: /edit-room/:id
