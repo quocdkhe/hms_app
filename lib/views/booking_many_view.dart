@@ -148,7 +148,16 @@ class _CreateBookingManyScreenState extends State<CreateBookingManyScreen> {
         );
       }
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/room-map');
+        final customer = CustomerShortDetail(
+          userId: userId,
+          name: name,
+          phone: phone,
+        );
+        Navigator.of(context).pushReplacementNamed('/find-customer');
+        Navigator.of(context).pushNamed(
+          '/customer-bookings/$userId',
+          arguments: customer,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -211,62 +220,73 @@ class _CreateBookingManyScreenState extends State<CreateBookingManyScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  children: rooms.map((room) => Column(
-                    children: [
-                      const Divider(height: 1),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  children: rooms
+                      .map(
+                        (room) => Column(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: room.imageUrl != null
-                                  ? Image.network(
-                                      room.imageUrl!,
-                                      width: 64,
-                                      height: 64,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
-                                          _imagePlaceholder(),
-                                    )
-                                  : _imagePlaceholder(),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
+                            const Divider(height: 1),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'Phòng ${room.roomName} - ${room.typeName}',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: room.imageUrl != null
+                                        ? Image.network(
+                                            room.imageUrl!,
+                                            width: 64,
+                                            height: 64,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) =>
+                                                _imagePlaceholder(),
+                                          )
+                                        : _imagePlaceholder(),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.bed,
-                                          size: 13, color: Colors.grey),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${room.numberOfBed} giường  •  Tầng ${room.floor}',
-                                        style: const TextStyle(
-                                            fontSize: 12, color: Colors.grey),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${formatVND(room.pricePerNight)} VND/đêm',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.green,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Phòng ${room.roomName} - ${room.typeName}',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.bed,
+                                              size: 13,
+                                              color: Colors.grey,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${room.numberOfBed} giường  •  Tầng ${room.floor}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${formatVND(room.pricePerNight)} VND/đêm',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.green,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -274,9 +294,8 @@ class _CreateBookingManyScreenState extends State<CreateBookingManyScreen> {
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  )).toList(),
+                      )
+                      .toList(),
                 ),
               ),
 

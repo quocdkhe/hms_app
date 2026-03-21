@@ -223,7 +223,6 @@ class BookingRepository {
     await _supabase
         .from("bookings")
         .update({
-          "check_in_date_time": checkInDateTime.toUtc().toIso8601String(),
           "check_out_date_time": checkOutDateTime.toUtc().toIso8601String(),
         })
         .eq('id', bookingId);

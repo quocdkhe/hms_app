@@ -36,6 +36,7 @@ class _CheckOutViewState extends State<CheckOutView> {
 
   List<BillingItem> _billingItems = [];
   List<BillingItem> _extraItems = [];
+  bool _isCheckingOut = false;
 
   @override
   void initState() {
@@ -123,12 +124,14 @@ class _CheckOutViewState extends State<CheckOutView> {
     );
     if (confirmed != true) return;
 
+    setState(() => _isCheckingOut = true);
     try {
       final allItems = [..._billingItems, ...roomFeeItems, ..._extraItems];
       await _feeRepository.addFees(allItems, widget.bookingId);
       await _bookingRepository.checkOut(widget.bookingId);
 
       if (mounted) {
+        Navigator.of(context).pop(true);
         Navigator.of(context).pop(true);
       }
     } catch (e) {
@@ -137,6 +140,8 @@ class _CheckOutViewState extends State<CheckOutView> {
           context,
         ).showSnackBar(SnackBar(content: Text('Lỗi khi thanh toán: $e')));
       }
+    } finally {
+      if (mounted) setState(() => _isCheckingOut = false);
     }
   }
 
@@ -636,11 +641,20 @@ class _CheckOutViewState extends State<CheckOutView> {
                 ),
                 const SizedBox(height: 8),
                 FilledButton(
-                  onPressed: () => _goToPayment(roomFeeItems),
+                  onPressed: _isCheckingOut ? null : () => _goToPayment(roomFeeItems),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                   ),
-                  child: const Text('Thanh toán'),
+                  child: _isCheckingOut
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Thanh toán'),
                 ),
               ],
             ),

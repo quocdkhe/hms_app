@@ -61,14 +61,26 @@ class _CustomerBookingsViewState extends State<CustomerBookingsView> {
   }
 
   void _navigateToBooking(BookingScheduleItem booking) async {
-    final route = booking.status == BookingStatus.checkedIn
-        ? '/stay-management/${booking.id}'
-        : '/booking-details/${booking.id}';
+    String? route;
+    switch (booking.status) {
+      case BookingStatus.confirmed:
+        route = '/booking-details/${booking.id}';
+        break;
+      case BookingStatus.checkedIn:
+        route = '/stay-management/${booking.id}';
+        break;
+      case BookingStatus.checkedOut:
+        route = '/bill-details/${booking.id}';
+        break;
+      case BookingStatus.noShow:
+        route = '/booking-details/${booking.id}';
+        break;
+    }
     final result = await Navigator.pushNamed(context, route);
     if (result == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thao tác thành công!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Thao tác thành công!')));
       setState(() => _loadBookings());
     }
   }
@@ -92,8 +104,8 @@ class _CustomerBookingsViewState extends State<CustomerBookingsView> {
                 radius: 36,
                 backgroundImage:
                     (customer.avatar != null && customer.avatar!.isNotEmpty)
-                        ? NetworkImage(customer.avatar!)
-                        : null,
+                    ? NetworkImage(customer.avatar!)
+                    : null,
                 child: (customer.avatar == null || customer.avatar!.isEmpty)
                     ? const Icon(Icons.person, size: 36)
                     : null,
@@ -193,8 +205,9 @@ class _CustomerBookingsViewState extends State<CustomerBookingsView> {
 
               final bookings = snapshot.data ?? [];
               final activeStatus = _tabStatuses[_selectedTabIndex];
-              final filtered =
-                  bookings.where((b) => b.status == activeStatus).toList();
+              final filtered = bookings
+                  .where((b) => b.status == activeStatus)
+                  .toList();
 
               if (filtered.isEmpty) {
                 return Padding(
