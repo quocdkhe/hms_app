@@ -4,6 +4,7 @@ import 'package:hms_app/models/enums/booking_status.dart';
 import 'package:hms_app/models/dtos/room_details.dart';
 import 'package:hms_app/repositories/room_repository.dart';
 import 'package:hms_app/utils/format_vnd.dart';
+import 'package:hms_app/widgets/room_detail_card.dart';
 
 class RoomDetailScreen extends StatefulWidget {
   final int roomId;
@@ -75,89 +76,8 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             children: [
               // ── Room detail ────────────────────────────────────
               // Room details section
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Image section
-                  if (room.imageUrl != null)
-                    Image.network(
-                      room.imageUrl!,
-                      width: 110,
-                      height: 110,
-                      fit: BoxFit.cover,
-                    )
-                  else
-                    Container(
-                      width: 110,
-                      height: 110,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, color: Colors.grey),
-                    ),
+              RoomDetailCard(room: room),
 
-                  // Content section
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Phòng ${room.roomName} - ${room.typeName}',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.bed,
-                                size: 14,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${room.numberOfBed} giường  •  Tầng ${room.floor}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${formatVND(room.pricePerNight)} VND/đêm',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.green,
-                            ),
-                          ),
-                          if (room.description != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              room.description!,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               // End room details section
               const Divider(height: 32),
 

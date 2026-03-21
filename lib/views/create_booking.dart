@@ -7,6 +7,7 @@ import 'package:hms_app/repositories/user_repository.dart';
 import 'package:hms_app/utils/date_diff.dart';
 import 'package:hms_app/utils/format_vnd.dart';
 import 'package:hms_app/widgets/date_time_picker.dart';
+import 'package:hms_app/widgets/room_detail_card.dart';
 
 class CreateBookingScreen extends StatefulWidget {
   const CreateBookingScreen({super.key, required this.roomId});
@@ -179,89 +180,7 @@ class _CreateBookingScreenState extends State<CreateBookingScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               // ── Section 1: Room details ──────────────────────────
-              Card(
-                clipBehavior: Clip.antiAlias,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (room.imageUrl != null)
-                      Image.network(
-                        room.imageUrl!,
-                        width: 110,
-                        height: 110,
-                        fit: BoxFit.cover,
-                      )
-                    else
-                      Container(
-                        width: 110,
-                        height: 110,
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.image, color: Colors.grey),
-                      ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Phòng ${room.roomName} - ${room.typeName}',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.bed,
-                                  size: 14,
-                                  color: Colors.grey,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${room.numberOfBed} giường  •  Tầng ${room.floor}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${formatVND(room.pricePerNight)} VND/đêm',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.green,
-                              ),
-                            ),
-                            if (room.description != null) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                room.description!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              RoomDetailCard(room: room),
 
               const SizedBox(height: 20),
 

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 enum RoomStatus { available, using }
 
 class RoomCardItem {
@@ -20,7 +18,6 @@ class RoomCardItem {
     final roomName = roomData['room_name'] as String;
     final roomType = roomData['room_types'] as Map?;
     final typeName = roomType?['type_name'] as String? ?? '';
-    final now = DateTime.now().toUtc();
 
     final bookings = roomData['bookings'] as List? ?? [];
 

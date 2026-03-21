@@ -153,7 +153,8 @@ class RoomRepository {
             number_of_bed,
             price_per_night,
             description,
-            image_url
+            image_url,
+            add_on
           )
         ''')
         .eq('id', id)

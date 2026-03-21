@@ -7,7 +7,7 @@ class RoomDetails {
   final int numberOfBed;
   final int pricePerNight;
   final String? description;
-
+  final String? addOn;
   RoomDetails({
     required this.id,
     required this.roomName,
@@ -17,6 +17,7 @@ class RoomDetails {
     required this.numberOfBed,
     required this.pricePerNight,
     this.description,
+    this.addOn,
   });
 
   factory RoomDetails.fromJson(Map<String, dynamic> json) {
@@ -29,6 +30,7 @@ class RoomDetails {
       numberOfBed: json['room_types']['number_of_bed'] as int,
       pricePerNight: json['room_types']['price_per_night'] as int,
       description: json['room_types']['description'] as String?,
+      addOn: json['room_types']['add_on'] as String?,
     );
   }
 
@@ -43,6 +45,7 @@ class RoomDetails {
         'number_of_bed': numberOfBed,
         'price_per_night': pricePerNight,
         'description': description,
+        'add_on': addOn,
       },
     };
   }
