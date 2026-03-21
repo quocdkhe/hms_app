@@ -58,18 +58,28 @@ class HMSApp extends StatelessWidget {
       title: 'Flutter Demo',
       themeMode: themeProvider.themeMode,
       debugShowCheckedModeBanner: false,
+      // 1. Light Theme
       theme: ThemeData(
-        textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
+        useMaterial3: true,
+        brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(
           seedColor: colorProvider.primaryColor,
           brightness: Brightness.light,
         ),
+        // Use a generic light text theme as the base
+        textTheme: GoogleFonts.interTextTheme(Typography.material2021().black),
       ),
+
+      // 2. Dark Theme
       darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
           seedColor: colorProvider.primaryColor,
           brightness: Brightness.dark,
         ),
+        // CRITICAL: Use the white typography base so text isn't black-on-black
+        textTheme: GoogleFonts.interTextTheme(Typography.material2021().white),
       ),
       initialRoute: '/login', // login
       routes: {
