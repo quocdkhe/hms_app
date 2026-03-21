@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hms_app/providers/color_provider.dart';
 import 'package:hms_app/providers/pricing_config_provider.dart';
 import 'package:hms_app/views/bill_details_view.dart';
@@ -23,7 +24,6 @@ import 'package:hms_app/models/dtos/customer_short_detail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'views/room_map_view.dart';
 import 'views/login_view.dart';
-
 import 'package:provider/provider.dart';
 import 'package:hms_app/providers/theme_provider.dart';
 import 'package:hms_app/providers/user_provider.dart';
@@ -59,6 +59,7 @@ class HMSApp extends StatelessWidget {
       themeMode: themeProvider.themeMode,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
         colorScheme: ColorScheme.fromSeed(
           seedColor: colorProvider.primaryColor,
           brightness: Brightness.light,
@@ -102,11 +103,9 @@ class HMSApp extends StatelessWidget {
         // Match: /customer-bookings/:userId
         if (uri.pathSegments.length == 2 &&
             uri.pathSegments.first == 'customer-bookings') {
-          final customer =
-              settings.arguments as CustomerShortDetail;
+          final customer = settings.arguments as CustomerShortDetail;
           return MaterialPageRoute(
-            builder: (context) =>
-                CustomerBookingsView(customer: customer),
+            builder: (context) => CustomerBookingsView(customer: customer),
           );
         }
 
